@@ -205,68 +205,86 @@ void OnMultParallel1(int m_ar, int m_br) {
     double *phb = (double *)malloc(m_ar * m_br * sizeof(double));
     double *phc = (double *)malloc(m_ar * m_br * sizeof(double));
 
-    for (int i = 0; i < m_ar; i++) {
-        for (int j = 0; j < m_ar; j++) {
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_ar; j++)
             pha[i * m_ar + j] = 1.0;
-        }
-        for (int j = 0; j < m_br; j++) {
-            phb[i * m_br + j] = i + 1;
-            phc[i * m_br + j] = 0.0;
-        }
-    }
 
-    SYSTEMTIME Time1, Time2;
-    Time1 = clock();
-    #pragma omp parallel for private(i, j, k)
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_br; j++)
+            phb[i * m_br + j] = i + 1;
+
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_br; j++)
+            phc[i * m_br + j] = 0.0;
+
+    double start = omp_get_wtime();
+
+    #pragma omp parallel for  
     for (int i = 0; i < m_ar; i++) {
-        for (int j = 0; j < m_br; j++) {
-            for (int k = 0; k < m_ar; k++) {
+        for (int k = 0; k < m_ar; k++) {
+            for (int j = 0; j < m_br; j++) {
                 phc[i * m_br + j] += pha[i * m_ar + k] * phb[k * m_br + j];
             }
         }
     }
-    Time2 = clock();
-    cout << "Time: " << (double)(Time2 - Time1) / CLOCKS_PER_SEC << " seconds." << endl;
+
+    double end = omp_get_wtime();
+    printf("Execution time (Parallel 1): %f seconds\n", end - start);
 
     free(pha);
     free(phb);
     free(phc);
 }
 
-
 void OnMultParallel2(int m_ar, int m_br) {
     double *pha = (double *)malloc(m_ar * m_ar * sizeof(double));
     double *phb = (double *)malloc(m_ar * m_br * sizeof(double));
+    double *phb_T = (double *)malloc(m_ar * m_br * sizeof(double));  
     double *phc = (double *)malloc(m_ar * m_br * sizeof(double));
 
-    for (int i = 0; i < m_ar; i++) {
-        for (int j = 0; j < m_ar; j++) {
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_ar; j++)
             pha[i * m_ar + j] = 1.0;
-        }
+
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++) {
         for (int j = 0; j < m_br; j++) {
             phb[i * m_br + j] = i + 1;
-            phc[i * m_br + j] = 0.0;
+            phb_T[j * m_ar + i] = phb[i * m_br + j]; 
         }
     }
 
-    SYSTEMTIME Time1, Time2;
-    Time1 = clock();
-	//#pragma omp parallel
-	// or
-    #pragma omp parallel for private(j, k)
-    for (int i = 0; i < m_ar; i++) {
-        for (int j = 0; j < m_br; j++) {
-            #pragma omp parallel for
-            for (int k = 0; k < m_ar; k++) {
-                phc[i * m_br + j] += pha[i * m_ar + k] * phb[k * m_br + j];
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_br; j++)
+            phc[i * m_br + j] = 0.0;
+
+    double start = omp_get_wtime();
+
+    #pragma omp parallel
+    {
+        #pragma omp for collapse(2) schedule(static)
+        for (int i = 0; i < m_ar; i++) {
+            for (int j = 0; j < m_br; j++) {
+                double temp = 0.0;
+                for (int k = 0; k < m_ar; k++) {
+                    temp += pha[i * m_ar + k] * phb_T[j * m_ar + k]; 
+                }
+                phc[i * m_br + j] = temp;
             }
         }
     }
-    Time2 = clock();
-    cout << "Time: " << (double)(Time2 - Time1) / CLOCKS_PER_SEC << " seconds." << endl;
+
+    double end = omp_get_wtime();
+    printf("Execution time: %f seconds\n", end - start);
 
     free(pha);
     free(phb);
+    free(phb_T);
     free(phc);
 }
 
