@@ -2,7 +2,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Scanner;
 
-public class matrixmultiplication {
+public class matrixproduct {
 
     private static long getCpuTime() {
         ThreadMXBean bean = ManagementFactory.getThreadMXBean();
@@ -80,37 +80,37 @@ public class matrixmultiplication {
         double[][] A = new double[size][size];
         double[][] B = new double[size][size];
         double[][] C = new double[size][size];
-
+    
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 A[i][j] = 1.0;
                 B[i][j] = i + 1;
+                C[i][j] = 0.0; 
             }
         }
-
+        
+        int ii, jj, kk, i, j, k;
         long start = System.nanoTime();
-
-        for (int ii = 0; ii < size; ii += blockSize) {
-            for (int jj = 0; jj < size; jj += blockSize) {
-                for (int kk = 0; kk < size; kk += blockSize) {
-                    for (int i = ii; i < Math.min(ii + blockSize, size); i++) {
-                        for (int j = jj; j < Math.min(jj + blockSize, size); j++) {
-                            double sum = 0;
-                            for (int k = kk; k < Math.min(kk + blockSize, size); k++) {
-                                sum += A[i][k] * B[k][j];
+    
+        for (ii = 0; ii < size; ii += blockSize) {
+            for  (kk = 0; kk < size; kk += blockSize)  { 
+                for (jj = 0; jj < size; jj += blockSize) {
+                    for (i = ii; i < Math.min(ii + blockSize, size); i++) {
+                        for (k = kk; k < Math.min(kk + blockSize, size); k++) {
+                            for (j = jj; j < Math.min(jj + blockSize, size); j++) {
+                                C[i][j] += A[i][k] * B[k][j];
                             }
-                            C[i][j] += sum;
                         }
                     }
                 }
             }
         }
-
+    
         long end = System.nanoTime();
         System.out.printf("Time: %.3f seconds\n", (end - start) / 1e9);
-
+    
         System.out.println("Result matrix: ");
-        for (int j = 0; j < Math.min(10, size); j++) {
+        for (j = 0; j < Math.min(10, size); j++) {
             System.out.print(C[0][j] + " ");
         }
         System.out.println();
