@@ -103,11 +103,10 @@ void OnMultLine(int m_ar, int m_br)
 
     Time1 = clock();
 
-    for (i=0; i<m_ar; i++) 
-    {	for (k=0; k<m_ar; k++) 
-        {	temp = pha[i*m_ar + k]; 
-            for (j=0; j<m_br; j++) 
-            {
+    for (i=0; i<m_ar; i++) {	
+		for (k=0; k<m_ar; k++) {	
+			temp = pha[i*m_ar + k]; 
+            for (j=0; j<m_br; j++) {
                 phc[i*m_ar+j] += temp * phb[k*m_br+j];
             }
         }
@@ -159,19 +158,24 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 			phb[i*m_br + j] = (double)(i+1);
 
 
+	int i2, j2, k2;
 
     Time1 = clock();
 
-    for (int ii = 0; ii < m_ar; ii += bkSize) {
-		for (int jj = 0; jj < m_ar; jj += bkSize) {
-			for (int kk = 0; kk < m_ar; kk += bkSize) {
-				for (int i = ii; i < std::min(ii + bkSize, m_ar); i++) {
-					for (int j = jj; j < std::min(jj + bkSize, m_ar); j++) {
-						double sum = 0;
-						for (int k = kk; k < std::min(kk + bkSize, m_ar); k++) {
-							sum += pha[i * m_ar + k] * phb[k * m_ar + j];  
+	for (i = 0; i < m_ar; i += bkSize)
+	{
+		for (j = 0; j < m_br; j += bkSize)
+		{
+			for (k = 0; k < m_ar; k += bkSize)
+			{
+				for (i2 = i; i2 < min(i + bkSize, m_ar); i2++)
+				{
+					for (j2 = j; j2 < min(j + bkSize, m_br); j2++)
+					{
+						for (k2 = k; k2 < min(k + bkSize, m_ar); k2++)
+						{
+							phc[i2 * m_ar + k2] += pha[i2 * m_ar + j2] * phb[j2 * m_br + k2];
 						}
-						phc[i * m_ar + j] += sum;  
 					}
 				}
 			}
