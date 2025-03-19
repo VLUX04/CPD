@@ -167,13 +167,19 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 		{
 			for (k = 0; k < m_ar; k += bkSize)
 			{
-				for (i2 = i; i2 < min(i + bkSize, m_ar); i2++)
+
+				int iMax = min(i + bkSize, m_ar);
+                int jMax = min(j + bkSize, m_ar);
+                int kMax = min(k + bkSize, m_ar);
+
+				for (i2 = i; i2 < iMax; i2++)
 				{
-					for (j2 = j; j2 < min(j + bkSize, m_br); j2++)
+					for (k2 = k; k2 < kMax; k2++)
 					{
-						for (k2 = k; k2 < min(k + bkSize, m_ar); k2++)
+						temp = pha[i2 * m_ar + k2];
+						for (j2 = j; j2 < jMax; j2++)
 						{
-							phc[i2 * m_ar + k2] += pha[i2 * m_ar + j2] * phb[j2 * m_br + k2];
+							phc[i2 * m_ar + j2] += temp * phb[k2 * m_br + j2];
 						}
 					}
 				}
@@ -198,7 +204,6 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
     free(phc);
     
 }
-
 void OnMultParallel1(int m_ar, int m_br) {
     double *pha = (double *)malloc(m_ar * m_ar * sizeof(double));
     double *phb = (double *)malloc(m_ar * m_br * sizeof(double));
