@@ -1,13 +1,6 @@
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.Scanner;
 
 public class matrixproduct {
-
-    private static long getCpuTime() {
-        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-        return bean.isCurrentThreadCpuTimeSupported() ? bean.getCurrentThreadCpuTime() : 0L;
-    }
 
     private static void onMult(int size) {
         double[][] A = new double[size][size];
@@ -21,12 +14,13 @@ public class matrixproduct {
             }
         }
 
+        int i, j, k;
         long start = System.nanoTime();
         
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
+        for (i = 0; i < size; i++) {
+            for (j = 0; j < size; j++) {
                 double sum = 0;
-                for (int k = 0; k < size; k++) {
+                for (k = 0; k < size; k++) {
                     sum += A[i][k] * B[k][j];
                 }
                 C[i][j] = sum;
@@ -37,7 +31,7 @@ public class matrixproduct {
         System.out.printf("Time: %.3f seconds\n", (end - start) / 1e9);
 
         System.out.println("Result matrix: ");
-        for (int j = 0; j < Math.min(10, size); j++) {
+        for (j = 0; j < Math.min(10, size); j++) {
             System.out.print(C[0][j] + " ");
         }
         System.out.println();
@@ -55,12 +49,13 @@ public class matrixproduct {
             }
         }
 
+        int i, j, k;
         long start = System.nanoTime();
         
-        for (int i = 0; i < size; i++) {
-            for (int k = 0; k < size; k++) {
+        for (i = 0; i < size; i++) {
+            for (k = 0; k < size; k++) {
                 double temp = A[i][k];
-                for (int j = 0; j < size; j++) {
+                for (j = 0; j < size; j++) {
                     C[i][j] += temp * B[k][j];
                 }
             }
@@ -70,7 +65,7 @@ public class matrixproduct {
         System.out.printf("Time: %.3f seconds\n", (end - start) / 1e9);
 
         System.out.println("Result matrix: ");
-        for (int j = 0; j < Math.min(10, size); j++) {
+        for (j = 0; j < Math.min(10, size); j++) {
             System.out.print(C[0][j] + " ");
         }
         System.out.println();
@@ -91,21 +86,27 @@ public class matrixproduct {
         
         int ii, jj, kk, i, j, k;
         long start = System.nanoTime();
-    
+
         for (ii = 0; ii < size; ii += blockSize) {
-            for  (kk = 0; kk < size; kk += blockSize)  { 
-                for (jj = 0; jj < size; jj += blockSize) {
-                    for (i = ii; i < Math.min(ii + blockSize, size); i++) {
-                        for (k = kk; k < Math.min(kk + blockSize, size); k++) {
-                            for (j = jj; j < Math.min(jj + blockSize, size); j++) {
-                                C[i][j] += A[i][k] * B[k][j];
+            for (jj = 0; jj < size; jj += blockSize) {
+                for (kk = 0; kk < size; kk += blockSize) {
+
+                    int iMax = Math.min(ii + blockSize, size);
+                    int jMax = Math.min(jj + blockSize, size);
+                    int kMax = Math.min(kk + blockSize, size);
+
+                    for (i = ii; i < iMax; i++) {
+                        for (k = kk; k < kMax; k++) {
+                            double temp = A[i][k]; 
+                            for (j = jj; j < jMax; j++) {
+                                C[i][j] += temp * B[k][j];
                             }
                         }
                     }
                 }
             }
         }
-    
+
         long end = System.nanoTime();
         System.out.printf("Time: %.3f seconds\n", (end - start) / 1e9);
     

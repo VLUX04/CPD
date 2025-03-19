@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "matrixproduct",
+      "request": "launch",
+      "mainClass": "matrixproduct",
+      "projectName": "g16_b0c04545"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
