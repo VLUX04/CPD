@@ -3,7 +3,7 @@
 rm -f matrixProduct
 
 # Compile the C++ program
-g++ -O2 matrixproduct.cpp -o matrixProduct -lpapi -fopenmp
+g++ -O2 matrixproduct_test.cpp -o matrixProduct -lpapi -fopenmp
 
 # Function to run tests and capture execution time
 run_tests() {
