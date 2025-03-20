@@ -107,11 +107,10 @@ public class matrixproduct_test {
             return;
         }
 
-        int version = Integer.parseInt(args[0]);  // First argument: version
-        int size = Integer.parseInt(args[1]);     // Second argument: matrix size
-        int blockSize = (args.length > 2) ? Integer.parseInt(args[2]) : 0;  // Optional block size
+        int version = Integer.parseInt(args[0]);  
+        int size = Integer.parseInt(args[1]);    
+        int blockSize = (args.length > 2) ? Integer.parseInt(args[2]) : 0;  
 
-        // Call the corresponding multiplication function based on the version
         if (version == 1) {
             onMult(size);
         } else if (version == 2) {
