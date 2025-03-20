@@ -3,14 +3,14 @@ import java.util.Scanner;
 public class matrixproduct {
 
     private static void onMult(int size) {
-        double[][] A = new double[size][size];
-        double[][] B = new double[size][size];
-        double[][] C = new double[size][size];
+        double[] A = new double[size * size];
+        double[] B = new double[size * size];
+        double[] C = new double[size * size];
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                A[i][j] = 1.0;
-                B[i][j] = i + 1;
+                A[i * size + j] = 1.0;
+                B[i * size + j] = i + 1;
             }
         }
 
@@ -21,9 +21,9 @@ public class matrixproduct {
             for (j = 0; j < size; j++) {
                 double sum = 0;
                 for (k = 0; k < size; k++) {
-                    sum += A[i][k] * B[k][j];
+                    sum += A[i * size + k] * B[k * size + j];
                 }
-                C[i][j] = sum;
+                C[i * size + j] = sum;
             }
         }
 
@@ -32,20 +32,20 @@ public class matrixproduct {
 
         System.out.println("Result matrix: ");
         for (j = 0; j < Math.min(10, size); j++) {
-            System.out.print(C[0][j] + " ");
+            System.out.print(C[j] + " ");
         }
         System.out.println();
     }
 
     private static void onMultLine(int size) {
-        double[][] A = new double[size][size];
-        double[][] B = new double[size][size];
-        double[][] C = new double[size][size];
+        double[] A = new double[size * size];
+        double[] B = new double[size * size];
+        double[] C = new double[size * size];
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                A[i][j] = 1.0;
-                B[i][j] = i + 1;
+                A[i * size + j] = 1.0;
+                B[i * size + j] = i + 1;
             }
         }
 
@@ -54,9 +54,9 @@ public class matrixproduct {
         
         for (i = 0; i < size; i++) {
             for (k = 0; k < size; k++) {
-                double temp = A[i][k];
+                double temp = A[i * size + k];
                 for (j = 0; j < size; j++) {
-                    C[i][j] += temp * B[k][j];
+                    C[i * size + j] += temp * B[k * size + j];
                 }
             }
         }
@@ -66,21 +66,21 @@ public class matrixproduct {
 
         System.out.println("Result matrix: ");
         for (j = 0; j < Math.min(10, size); j++) {
-            System.out.print(C[0][j] + " ");
+            System.out.print(C[j] + " ");
         }
         System.out.println();
     }
 
     private static void onMultBlock(int size, int blockSize) {
-        double[][] A = new double[size][size];
-        double[][] B = new double[size][size];
-        double[][] C = new double[size][size];
+        double[] A = new double[size * size];
+        double[] B = new double[size * size];
+        double[] C = new double[size * size];
     
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                A[i][j] = 1.0;
-                B[i][j] = i + 1;
-                C[i][j] = 0.0; 
+                A[i * size + j] = 1.0;
+                B[i * size + j] = i + 1;
+                C[i * size + j] = 0.0; 
             }
         }
         
@@ -97,9 +97,9 @@ public class matrixproduct {
 
                     for (i = ii; i < iMax; i++) {
                         for (k = kk; k < kMax; k++) {
-                            double temp = A[i][k]; 
+                            double temp = A[i * size + k]; 
                             for (j = jj; j < jMax; j++) {
-                                C[i][j] += temp * B[k][j];
+                                C[i * size + j] += temp * B[k * size + j];
                             }
                         }
                     }
@@ -112,7 +112,7 @@ public class matrixproduct {
     
         System.out.println("Result matrix: ");
         for (j = 0; j < Math.min(10, size); j++) {
-            System.out.print(C[0][j] + " ");
+            System.out.print(C[j] + " ");
         }
         System.out.println();
     }
