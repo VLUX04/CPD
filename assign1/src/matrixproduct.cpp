@@ -199,6 +199,7 @@ void OnMultBlock(int m_ar, int m_br, int blockSize)
     
 }
 void OnMultParallel1(int m_ar, int m_br) {
+	int i, j, k;
     double *pha = (double *)malloc(m_ar * m_ar * sizeof(double));
     double *phb = (double *)malloc(m_ar * m_br * sizeof(double));
     double *phc = (double *)malloc(m_ar * m_br * sizeof(double));
@@ -220,7 +221,7 @@ void OnMultParallel1(int m_ar, int m_br) {
 
     double start = omp_get_wtime();
 
-    #pragma omp parallel for  
+	#pragma omp parallel for private(i, j, k)
     for (int i = 0; i < m_ar; i++) {
         for (int k = 0; k < m_ar; k++) {
             for (int j = 0; j < m_br; j++) {
@@ -228,6 +229,7 @@ void OnMultParallel1(int m_ar, int m_br) {
             }
         }
     }
+
 
     double end = omp_get_wtime();
     printf("Execution time (Parallel 1): %f seconds\n", end - start);
@@ -238,6 +240,8 @@ void OnMultParallel1(int m_ar, int m_br) {
 }
 
 void OnMultParallel2(int m_ar, int m_br) {
+	int i, k;
+
     double *pha = (double *)malloc(m_ar * m_ar * sizeof(double));
     double *phb = (double *)malloc(m_ar * m_br * sizeof(double));
     double *phb_T = (double *)malloc(m_ar * m_br * sizeof(double));  
@@ -263,19 +267,15 @@ void OnMultParallel2(int m_ar, int m_br) {
 
     double start = omp_get_wtime();
 
-    #pragma omp parallel
-    {
-        #pragma omp for collapse(2) schedule(static)
-        for (int i = 0; i < m_ar; i++) {
-            for (int j = 0; j < m_br; j++) {
-                double temp = 0.0;
-                for (int k = 0; k < m_ar; k++) {
-                    temp += pha[i * m_ar + k] * phb_T[j * m_ar + k]; 
-                }
-                phc[i * m_br + j] = temp;
-            }
-        }
-    }
+	#pragma omp parallel for private(i, k) 
+	for (int i = 0; i < m_ar; i++)
+		for (int k = 0; k < m_ar; k++) {
+			#pragma omp parallel for
+			for (int j = 0; j < m_br; j++)
+				phc[i * m_br + j] += pha[i * m_ar + k] * phb[k * m_br + j];
+		}
+	
+
 
     double end = omp_get_wtime();
     printf("Execution time: %f seconds\n", end - start);
