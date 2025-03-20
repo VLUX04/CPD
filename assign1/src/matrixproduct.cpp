@@ -129,14 +129,14 @@ void OnMultLine(int m_ar, int m_br)
     free(phc);
 }
 
-void OnMultBlock(int m_ar, int m_br, int bkSize)
+void OnMultBlock(int m_ar, int m_br, int blockSize)
 {
 	
     SYSTEMTIME Time1, Time2;
 
     char st[100];
 	double temp;
-	int i, j, k;
+	int ii, jj, kk, i, j, k;
 
     double *pha, *phb, *phc;
 
@@ -161,25 +161,19 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
     Time1 = clock();
 
-	for (i = 0; i < m_ar; i += bkSize)
-	{
-		for (j = 0; j < m_br; j += bkSize)
-		{
-			for (k = 0; k < m_ar; k += bkSize)
-			{
+	for (ii = 0; ii < m_ar; ii += blockSize) {
+		for (jj = 0; jj < m_ar; jj += blockSize) {
+			for (kk = 0; kk < m_ar; kk += blockSize) {
 
-				int iMax = min(i + bkSize, m_ar);
-                int jMax = min(j + bkSize, m_ar);
-                int kMax = min(k + bkSize, m_ar);
+				int iMax = min(ii + blockSize, m_ar);
+				int jMax = min(jj + blockSize, m_ar);
+				int kMax = min(kk + blockSize, m_ar);
 
-				for (i2 = i; i2 < iMax; i2++)
-				{
-					for (k2 = k; k2 < kMax; k2++)
-					{
-						temp = pha[i2 * m_ar + k2];
-						for (j2 = j; j2 < jMax; j2++)
-						{
-							phc[i2 * m_ar + j2] += temp * phb[k2 * m_br + j2];
+				for (i = ii; i < iMax; i++) {
+					for (k = kk; k < kMax; k++) {
+						temp = pha[i*m_ar+k]; 
+						for (j = jj; j < jMax; j++) {
+							phc[i*m_ar+j] += temp * phb[k*m_ar+j];
 						}
 					}
 				}
