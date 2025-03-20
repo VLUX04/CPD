@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Increase stack size and heap size limits
+ulimit -s unlimited
+ulimit -v unlimited
+
 rm -f matrixProduct
 
 # Compile the C++ program

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Increase stack size and heap size limits
+ulimit -s unlimited
+ulimit -v unlimited
+
 # Function to run tests and capture execution time
 run_tests() {
     local start=$1
@@ -20,12 +24,12 @@ run_tests() {
         for run in {1..3}; do
             if [ -z "$blockSize" ]; then
                 # Run the Java program and capture the execution time
-                exec_time=$(java matrixproduct_test $version $size | grep 'Time:' | awk '{print $2}')
+                exec_time=$(java -Xmx4g matrixproduct_test $version $size | grep 'Time:' | awk '{print $2}')
                 echo "Running version $version with matrix size $size x $size, run $run: $exec_time" >> results-java-$version.txt
 
             else
                 # Run the Java program with block size and capture the execution time
-                exec_time=$(java matrixproduct_test $version $size $blockSize | grep 'Time:' | awk '{print $2}')
+                exec_time=$(java -Xmx4g matrixproduct_test $version $size $blockSize | grep 'Time:' | awk '{print $2}')
                 echo "Running version $version with matrix size $size x $size, block size $blockSize, run $run: $exec_time" >> results-java-$version.txt
             fi
         done
