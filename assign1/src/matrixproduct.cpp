@@ -132,53 +132,63 @@ void OnMultLine(int m_ar, int m_br)
 
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {
-    double Time1, Time2;
+	
+    SYSTEMTIME Time1, Time2;
+
     char st[100];
-    double temp;
-    int i, j, k, i2, j2, k2;
+	double temp;
+	int i, j, k;
 
     double *pha, *phb, *phc;
+
+
+
     pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
     phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
     phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
 
     for(i=0; i<m_ar; i++)
-        for(j=0; j<m_ar; j++)
-            pha[i*m_ar + j] = (double)1.0;
+		for(j=0; j<m_ar; j++)
+			pha[i*m_ar + j] = (double)1.0;
 
-    for(i=0; i<m_br; i++)
-        for(j=0; j<m_br; j++)
-            phb[i*m_br + j] = (double)(i+1);
 
-    Time1 = omp_get_wtime();
 
-    #pragma omp parallel for private(i, j, k, i2, j2, k2, temp) collapse(3)
-    for (i = 0; i < m_ar; i += bkSize)
-    {
-        for (j = 0; j < m_br; j += bkSize)
-        {
-            for (k = 0; k < m_ar; k += bkSize)
-            {
-                int iMax = min(i + bkSize, m_ar);
+	for(i=0; i<m_br; i++)
+		for(j=0; j<m_br; j++)
+			phb[i*m_br + j] = (double)(i+1);
+
+
+	int i2, j2, k2;
+
+    Time1 = clock();
+
+	for (i = 0; i < m_ar; i += bkSize)
+	{
+		for (k = 0; k < m_br; k += bkSize)
+		{
+			for (j = 0; j < m_ar; j += bkSize)
+			{
+
+				int iMax = min(i + bkSize, m_ar);
                 int jMax = min(j + bkSize, m_ar);
                 int kMax = min(k + bkSize, m_ar);
 
-                for (i2 = i; i2 < iMax; i2++)
-                {
-                    for (k2 = k; k2 < kMax; k2++)
-                    {
-                        temp = pha[i2 * m_ar + k2];
-                        for (j2 = j; j2 < jMax; j2++)
-                        {
-                            phc[i2 * m_ar + j2] += temp * phb[k2 * m_br + j2];
-                        }
-                    }
-                }
-            }
-        }
-    }
+				for (i2 = i; i2 < iMax; i2++)
+				{
+					for (k2 = k; k2 < kMax; k2++)
+					{
+						temp = pha[i2 * m_ar + k2];
+						for (j2 = j; j2 < jMax; j2++)
+						{
+							phc[i2 * m_ar + j2] += temp * phb[k2 * m_br + j2];
+						}
+					}
+				}
+			}
+		}
+	}
 
-    Time2 = omp_get_wtime();
+    Time2 = clock();
     sprintf(st, "Time: %3.3f seconds\n", Time2 - Time1);
     cout << st;
 
