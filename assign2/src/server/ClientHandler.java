@@ -10,12 +10,16 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
     private String username;
     private Room currentRoom;
+    private final TokenManager tokenManager;
 
-    public ClientHandler(Socket socket, AuthenticationManager authManager, RoomManager roomManager) {
+
+    public ClientHandler(Socket socket, AuthenticationManager authManager, RoomManager roomManager, TokenManager tokenManager) {
         this.socket = socket;
         this.authManager = authManager;
         this.roomManager = roomManager;
+        this.tokenManager = tokenManager;
     }
+
 
     public String getUsername() {
         return username;
@@ -89,24 +93,38 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void authenticateUser(BufferedReader in) throws IOException {
-        String userName;
-        String password;
-
-        while (true) {
-            sendMessage("Enter your username:");
-            userName = in.readLine();
-
-            sendMessage("Enter your password:");
-            password = in.readLine();
-
-            if (authManager.authenticate(userName, password)) {
-                this.username = userName;
-                sendMessage("Authentication successful!");
-                break;
+   private void authenticateUser(BufferedReader in) throws IOException {
+    while (true) {
+        sendMessage("Do you have a token? (yes/no)");
+        String reply = in.readLine();
+        if ("yes".equalsIgnoreCase(reply)) {
+            sendMessage("Enter your token:");
+            String token = in.readLine();
+            String userFromToken = tokenManager.getUsernameFromToken(token);
+            if (userFromToken != null) {
+                this.username = userFromToken;
+                sendMessage("Token authentication successful! Welcome back, " + username + ".");
+                return;
             } else {
-                sendMessage("Authentication failed! Try again.");
+                sendMessage("Invalid token. Switching to login...");
             }
         }
+
+        sendMessage("Enter your username:");
+        String userName = in.readLine();
+        sendMessage("Enter your password:");
+        String password = in.readLine();
+
+        if (authManager.authenticate(userName, password)) {
+            this.username = userName;
+            sendMessage("Authentication successful!");
+            String token = tokenManager.generateToken(userName);
+            sendMessage("Your session token: " + token);
+            return;
+        } else {
+            sendMessage("Authentication failed! Try again.");
+        }
+        }
     }
+
 }

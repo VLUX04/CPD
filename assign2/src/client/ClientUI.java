@@ -17,12 +17,24 @@ public class ClientUI {
             serverOut = new PrintWriter(socket.getOutputStream(), true);
             userIn = new Scanner(System.in);
 
+            String token = loadToken();
+            if (token != null) {
+                serverOut.println("yes"); // token mode
+                serverOut.println(token);
+            } else {
+                serverOut.println("no"); // login mode
+            }
+
             // Thread to read messages from server
             new Thread(() -> {
                 try {
                     String line;
                     while ((line = serverIn.readLine()) != null) {
                         System.out.println(line);
+                        if (line.startsWith("Your session token: ")) {
+                            String receivedToken = line.substring("Your session token: ".length()).trim();
+                            saveToken(receivedToken);
+                        }
                     }
                 } catch (IOException e) {
                     System.out.println("Disconnected from server.");
@@ -46,6 +58,7 @@ public class ClientUI {
         }
     }
 
+
     private void close() {
         try {
             if (socket != null) socket.close();
@@ -54,6 +67,23 @@ public class ClientUI {
             System.err.println("Error during cleanup.");
         }
     }
+
+    private String loadToken() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("token.txt"))) {
+            return reader.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void saveToken(String token) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("token.txt"))) {
+            writer.println(token);
+        } catch (IOException e) {
+            System.err.println("Could not save token.");
+        }
+    }
+
 
     public static void main(String[] args) {
         ClientUI client = new ClientUI();
