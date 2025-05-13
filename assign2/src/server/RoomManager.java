@@ -42,4 +42,14 @@ public class RoomManager {
             lock.unlock();
         }
     }
+
+    public List<String> getRoomNames() {
+        lock.lock();
+        try {
+            return new ArrayList<>(rooms.keySet());
+        } finally {
+            lock.unlock();
+        }
+    }
+
 }

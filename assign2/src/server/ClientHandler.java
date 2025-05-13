@@ -1,17 +1,17 @@
 package server;
 
 import java.io.*;
+import java.util.List;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final AuthenticationManager authManager;
     private final RoomManager roomManager;
+    private final TokenManager tokenManager;
     private PrintWriter out;
     private String username;
     private Room currentRoom;
-    private final TokenManager tokenManager;
-
 
     public ClientHandler(Socket socket, AuthenticationManager authManager, RoomManager roomManager, TokenManager tokenManager) {
         this.socket = socket;
@@ -20,32 +20,24 @@ public class ClientHandler implements Runnable {
         this.tokenManager = tokenManager;
     }
 
-
     public String getUsername() {
         return username;
     }
 
     public void sendMessage(String message) {
-        if (out != null) {
-            out.println(message);
-        }
+        if (out != null) out.println(message);
     }
 
     @Override
     public void run() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             out = new PrintWriter(socket.getOutputStream(), true);
-
-            // Authentication Process
             authenticateUser(in);
 
-            // Start with the default room
-            currentRoom = roomManager.getOrCreateRoom("Lobby");
-            currentRoom.join(this);
-
-            // Main loop for client communication
             String msg;
             while ((msg = in.readLine()) != null) {
+                tokenManager.saveUserRoom(username, currentRoom.getName());
+
                 if (msg.startsWith("/join ")) {
                     String newRoomName = msg.substring(6).trim();
                     Room newRoom = roomManager.getOrCreateRoom(newRoomName);
@@ -71,21 +63,17 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
-                // Broadcast normal message
+                currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
                     String aiReply = AIHelper.getBotReply(currentRoom.getPrompt(), currentRoom.getFullChatHistory());
                     currentRoom.broadcast("Bot: " + aiReply);
-                } else {
-                    currentRoom.broadcast(username + ": " + msg);
                 }
             }
         } catch (IOException e) {
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
             try {
-                if (currentRoom != null) {
-                    currentRoom.leave(this);
-                }
+                if (currentRoom != null) currentRoom.leave(this);
                 socket.close();
             } catch (IOException e) {
                 System.err.println("Error closing socket: " + e.getMessage());
@@ -93,23 +81,25 @@ public class ClientHandler implements Runnable {
         }
     }
 
-   private void authenticateUser(BufferedReader in) throws IOException {
-    while (true) {
-        sendMessage("Do you have a token? (yes/no)");
-        String reply = in.readLine();
-        if ("yes".equalsIgnoreCase(reply)) {
-            sendMessage("Enter your token:");
-            String token = in.readLine();
+    private void authenticateUser(BufferedReader in) throws IOException {
+        String mode = in.readLine(); 
+
+        if ("yes".equalsIgnoreCase(mode)) {
+            String token = in.readLine(); 
             String userFromToken = tokenManager.getUsernameFromToken(token);
             if (userFromToken != null) {
                 this.username = userFromToken;
                 sendMessage("Token authentication successful! Welcome back, " + username + ".");
+                String roomName = tokenManager.getUserRoom(username);
+                currentRoom = roomManager.getOrCreateRoom(roomName);
+                currentRoom.join(this);
                 return;
             } else {
                 sendMessage("Invalid token. Switching to login...");
             }
         }
 
+        // modo manual
         sendMessage("Enter your username:");
         String userName = in.readLine();
         sendMessage("Enter your password:");
@@ -119,12 +109,24 @@ public class ClientHandler implements Runnable {
             this.username = userName;
             sendMessage("Authentication successful!");
             String token = tokenManager.generateToken(userName);
+            tokenManager.saveUserRoom(username, "Lobby");
             sendMessage("Your session token: " + token);
-            return;
+            currentRoom = roomManager.getOrCreateRoom("Lobby");
+            currentRoom.join(this);
         } else {
             sendMessage("Authentication failed! Try again.");
+            authenticateUser(in); 
         }
+        List<String> roomNames = roomManager.getRoomNames();
+        if (roomNames.isEmpty()) {
+            sendMessage("No rooms available. Use /join <room> or /createai <name> <prompt>.");
+        } else {
+            sendMessage("Available rooms:");
+            for (String room : roomNames) {
+                sendMessage("- " + room);
+            }
         }
+
     }
 
 }

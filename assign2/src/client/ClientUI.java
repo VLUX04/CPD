@@ -41,42 +41,39 @@ public class ClientUI {
             serverOut = new PrintWriter(socket.getOutputStream(), true);
             userIn = new Scanner(System.in);
 
-            // Pergunta se quer usar token
             System.out.println("Do you want to login using a token? (yes/no)");
             String choice = userIn.nextLine().trim().toLowerCase();
 
             if (choice.equals("yes")) {
                 String token = loadToken();
                 if (token != null) {
-                    serverOut.println("yes"); // modo token
+                    serverOut.println("yes");
                     serverOut.println(token);
                 } else {
-                    System.out.println("No saved token found for user: " + username);
-                    serverOut.println("no"); // fallback para login manual
+                    System.out.println("No saved token found for user: " + username + ". Please login with username and password.");
+                    serverOut.println("no");
                 }
             } else {
-                serverOut.println("no"); // modo login manual
+                serverOut.println("no");
             }
 
-            // Thread para ler mensagens do servidor
             Thread serverReader = new Thread(() -> {
                 try {
                     String line;
                     while ((line = serverIn.readLine()) != null) {
                         System.out.println(line);
-
                         if (line.startsWith("Your session token: ")) {
                             String receivedToken = line.substring("Your session token: ".length()).trim();
                             saveToken(receivedToken);
                         }
                     }
                 } catch (IOException e) {
-                    System.out.println("Disconnected from server.");
+                    System.out.println("Disconnected from server. Attempting to reconnect...");
+                    reconnectLoop(host, port);
                 }
             });
             serverReader.start();
 
-            // Thread principal: input do utilizador
             while (true) {
                 if (!userIn.hasNextLine()) break;
                 String input = userIn.nextLine();
@@ -91,6 +88,39 @@ public class ClientUI {
 
         } catch (IOException e) {
             System.err.println("Could not connect: " + e.getMessage());
+        }
+    }
+
+    private void reconnectLoop(String host, int port) {
+        while (true) {
+            try {
+                Thread.sleep(2000);
+                socket = new Socket(host, port);
+                serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                serverOut = new PrintWriter(socket.getOutputStream(), true);
+
+                System.out.println("Reconnected!");
+                serverOut.println("yes");
+                String token = loadToken();
+                serverOut.println(token);
+
+                Thread reader = new Thread(() -> {
+                    try {
+                        String line;
+                        while ((line = serverIn.readLine()) != null) {
+                            System.out.println(line);
+                        }
+                    } catch (IOException e) {
+                        System.out.println("Disconnected again. Retrying...");
+                        reconnectLoop(host, port);
+                    }
+                });
+                reader.start();
+                break;
+
+            } catch (Exception e) {
+                System.out.print(".");
+            }
         }
     }
 
