@@ -5,10 +5,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AIHelper {
     private static final String API_URL = "http://localhost:11434/api/generate";
     private static final HttpClient client = HttpClient.newHttpClient();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static String getBotReply(String prompt, String context) {
         try {
@@ -36,19 +39,24 @@ public class AIHelper {
         StringBuilder json = new StringBuilder();
         json.append("{");
         json.append("\"model\":\"llama3\",");
-        json.append("\"prompt\":\"").append(escapeJson(prompt + "\n" + context)).append("\"");
+        json.append("\"prompt\":\"").append(escapeJson(prompt + "\n" + context)).append("\",");
+        json.append("\"stream\":false");
         json.append("}");
         return json.toString();
     }
 
     private static String parseResponse(String responseBody) {
-        int startIndex = responseBody.indexOf("\"response\":\"");
-        if (startIndex == -1) return "Error: Bot response not found.";
-        startIndex += 11;
-        int endIndex = responseBody.indexOf("\"", startIndex);
-        if (endIndex == -1) return "Error: Malformed bot response.";
-        String raw = responseBody.substring(startIndex, endIndex);
-        return raw.replace("\\n", "\n").replace("\\\"", "\"");
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            String reply = root.path("response").asText();
+            if (reply == null || reply.isBlank()) {
+                return "Error: Bot response not found.";
+            }
+            return reply.trim();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error: Could not parse bot response.";
+        }
     }
 
     private static String escapeJson(String text) {

@@ -48,6 +48,26 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
+                if (msg.startsWith("/createai ")) {
+                    String[] parts = msg.split(" ", 3);
+                    if (parts.length < 3) {
+                        sendMessage("Usage: /createai <room_name> <prompt>");
+                    } else {
+                        String roomName = parts[1];
+                        String prompt = parts[2];
+                        Room aiRoom = roomManager.createAIRoom(roomName, prompt);
+                        if (aiRoom == null) {
+                            sendMessage("Room already exists.");
+                        } else {
+                            currentRoom.leave(this);
+                            aiRoom.join(this);
+                            currentRoom = aiRoom;
+                            sendMessage("AI room '" + roomName + "' created and joined.");
+                        }
+                    }
+                    continue;
+                }
+
                 if (msg.startsWith("/msg ")) {
                     String[] parts = msg.split(" ", 3);
                     if (parts.length >= 3) {
@@ -65,6 +85,7 @@ public class ClientHandler implements Runnable {
 
                 currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
+                    currentRoom.broadcast("Bot is processing...");
                     String aiReply = AIHelper.getBotReply(currentRoom.getPrompt(), currentRoom.getFullChatHistory());
                     currentRoom.broadcast("Bot: " + aiReply);
                 }
