@@ -63,6 +63,10 @@ public class ClientHandler implements Runnable {
                             aiRoom.join(this);
                             currentRoom = aiRoom;
                             sendMessage("AI room '" + roomName + "' created and joined.");
+                            String systemPrompt = "You are a helpful chat bot. Only respond as the bot. Do not continue the conversation as the user. Answer the user's question or statement directly. Here is the first prompt: \n";
+                            currentRoom.broadcast("Bot is processing...");
+                            String aiReply = AIHelper.getBotReply(systemPrompt + prompt, currentRoom.getFullChatHistory());
+                            currentRoom.broadcast("Bot: " + aiReply);
                         }
                     }
                     continue;
@@ -86,7 +90,8 @@ public class ClientHandler implements Runnable {
                 currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
                     currentRoom.broadcast("Bot is processing...");
-                    String aiReply = AIHelper.getBotReply(currentRoom.getPrompt(), currentRoom.getFullChatHistory());
+                    String systemPrompt = "You are a helpful chat bot. Only respond as the bot. Do not continue the conversation as the user. Answer the user's question or statement directly, whilst taking into account the chat history. Here is the next prompt: \n";
+                    String aiReply = AIHelper.getBotReply(systemPrompt + currentRoom.getPrompt(), currentRoom.getFullChatHistory());
                     currentRoom.broadcast("Bot: " + aiReply);
                 }
             }
