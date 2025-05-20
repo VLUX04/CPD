@@ -41,6 +41,19 @@ public class ClientHandler implements Runnable {
 
                 tokenManager.saveUserRoom(username, currentRoom.getName());
 
+                if (msg.equals("/rooms")) {
+                    List<String> roomNames = roomManager.getRoomNames();
+                    if (roomNames.isEmpty()) {
+                        sendMessage("No rooms available.");
+                    } else {
+                        sendMessage("Available rooms:");
+                        for (String room : roomNames) {
+                            sendMessage("- " + room);
+                        }
+                    }
+                    continue;
+                }
+
                 if (msg.startsWith("/join ")) {
                     String newRoomName = msg.substring(6).trim();
                     Room newRoom = roomManager.getOrCreateRoom(newRoomName);
@@ -69,6 +82,7 @@ public class ClientHandler implements Runnable {
                             tokenManager.saveUserRoom(username, roomName);
                             sendMessage("AI room '" + roomName + "' created and joined.");
                             String systemPrompt = "You are a helpful chat bot. Only respond as the bot. Do not continue the conversation as the user. Answer the user's question or statement directly. Here is the first prompt: \n";
+                            sendMessage("Bot is processing...");
                             String aiReply = AIHelper.getBotReply(systemPrompt + prompt, currentRoom.getFullChatHistory());
                             currentRoom.broadcast("Bot: " + aiReply);
                         }
@@ -84,6 +98,7 @@ public class ClientHandler implements Runnable {
                         ClientHandler targetClient = roomManager.findUserGlobally(target);
                         if (targetClient != null) {
                             targetClient.sendMessage("[PM from " + username + "]: " + privateMsg);
+                            sendMessage("[PM to " + target + "]: " + privateMsg);
                         } else {
                             sendMessage("User not found.");
                         }
