@@ -19,7 +19,7 @@ public class TokenManager {
     private final ReentrantLock lock = new ReentrantLock();
     private static final long TOKEN_VALIDITY_MS = 60 * 1000;
 
-    private final File tokenFile = new File("tokens.txt");
+    private final File tokenFile = new File("helpers/tokens.txt");
 
     public TokenManager() {
         loadTokensFromFile();

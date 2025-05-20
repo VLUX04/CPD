@@ -20,7 +20,7 @@ public class ClientUI {
     }
 
     private String getTokenFile() {
-        return "token_" + username + ".txt";
+        return "helpers/token_" + username + ".txt";
     }
 
     private String loadToken() {

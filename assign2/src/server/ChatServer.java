@@ -11,7 +11,7 @@ public class ChatServer {
         System.out.println("ChatServer running on port " + port);
 
         // Shared managers
-        AuthenticationManager authManager = new AuthenticationManager("users.txt");
+        AuthenticationManager authManager = new AuthenticationManager("helpers/users.txt");
         RoomManager roomManager = new RoomManager();
         TokenManager tokenManager = new TokenManager();
 
