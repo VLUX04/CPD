@@ -32,10 +32,19 @@ public class Room {
     public void broadcast(String message) {
         lock.lock();
         try {
-            history.add(message);
+            history.add(message); // Store every message
             for (ClientHandler client : clients) {
                 client.sendMessage(message);
             }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public String getFullChatHistory() {
+        lock.lock();
+        try {
+            return String.join("\n", history);
         } finally {
             lock.unlock();
         }
@@ -63,9 +72,5 @@ public class Room {
 
     public Set<ClientHandler> getClients() {
         return clients;
-    }
-
-    public String getFullChatHistory() {
-        return String.join("\n", history);
     }
 }

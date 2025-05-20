@@ -118,6 +118,12 @@ public class ClientHandler implements Runnable {
                 sendMessage("Token authentication successful! Welcome back, " + username + ".");
                 String roomName = tokenManager.getUserRoom(username);
                 currentRoom = roomManager.getOrCreateRoom(roomName);
+                if (currentRoom != null) {
+                    String history = currentRoom.getFullChatHistory();
+                    if (history != null && !history.isBlank()) {
+                        sendMessage("---- Chat History ----\n" + history);
+                    }
+                }
                 currentRoom.join(this);
                 return;
             } else {
@@ -138,7 +144,14 @@ public class ClientHandler implements Runnable {
             tokenManager.saveUserRoom(username, "Lobby");
             sendMessage("Your session token: " + token);
             currentRoom = roomManager.getOrCreateRoom("Lobby");
+            if (currentRoom != null) {
+                String history = currentRoom.getFullChatHistory();
+                if (history != null && !history.isBlank()) {
+                    sendMessage("---- Chat History ----\n" + history);
+                }
+            }
             currentRoom.join(this);
+            return;
         } else {
             sendMessage("Authentication failed! Try again.");
             authenticateUser(in); 
