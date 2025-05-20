@@ -54,12 +54,10 @@ public class ClientUI {
 
         String token = loadToken();
         if (token != null) {
-            // Try to resume session with token
             serverOut.println("yes");
             serverOut.println(token);
         }
         else {
-            // No token, do normal login
             serverOut.println("no");
         }
 
@@ -72,14 +70,12 @@ public class ClientUI {
                         String receivedToken = line.substring("Your session token: ".length()).trim();
                         saveToken(receivedToken);
                     }
-                    // If token is invalid, server will prompt for login, so delete the bad token
                     if (line.contains("Invalid or expired token")) {
                         File f = new File("token_" + username + ".txt");
                         if (f.exists()) f.delete();
                     }
                 }
             } catch (IOException e) {
-                // Signal main thread to reconnect
                 running = true;
                 try { socket.close(); } catch (IOException ignored) {}
             }
@@ -87,7 +83,6 @@ public class ClientUI {
         serverReader.setDaemon(true);
         serverReader.start();
 
-        // Main user input loop
         while (running && !socket.isClosed()) {
             if (!userIn.hasNextLine()) break;
             String input = userIn.nextLine();
@@ -113,10 +108,6 @@ public class ClientUI {
         ClientUI client = new ClientUI();
         try (Scanner scanner = new Scanner(System.in)) {
 
-            System.out.print("Enter your username: ");
-            String username = scanner.nextLine().trim();
-            client.setUsername(username);
-
             System.out.print("Enter server IP (default: localhost): ");
             String host = scanner.nextLine().trim();
             if (host.isEmpty()) host = "localhost";
@@ -124,6 +115,10 @@ public class ClientUI {
             System.out.print("Enter port (default: 12345): ");
             String portStr = scanner.nextLine().trim();
             int port = portStr.isEmpty() ? 12345 : Integer.parseInt(portStr);
+
+            System.out.print("Enter your username: ");
+            String username = scanner.nextLine().trim();
+            client.setUsername(username);
 
             client.start(host, port);
         }

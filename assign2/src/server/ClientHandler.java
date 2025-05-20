@@ -36,6 +36,10 @@ public class ClientHandler implements Runnable {
 
             String msg;
             while ((msg = in.readLine()) != null) {
+
+                String msgTest = msg.trim();
+                if (msgTest.isEmpty()) continue;
+
                 tokenManager.saveUserRoom(username, currentRoom.getName());
 
                 if (msg.startsWith("/join ")) {
