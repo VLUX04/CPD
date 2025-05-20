@@ -19,6 +19,9 @@ public class RoomManager {
     public Room createAIRoom(String name, String prompt) {
         lock.lock();
         try {
+            if (rooms.containsKey(name)) {
+                return null; 
+            }
             Room room = new Room(name, true, prompt);
             rooms.put(name, room);
             return room;
@@ -52,4 +55,12 @@ public class RoomManager {
         }
     }
 
+    public Room getRoom(String name) {
+        lock.lock();
+        try {
+            return rooms.get(name);
+        } finally {
+            lock.unlock();
+        }
+    }
 }

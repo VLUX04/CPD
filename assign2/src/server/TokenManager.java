@@ -1,5 +1,6 @@
 package server;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -16,7 +17,13 @@ public class TokenManager {
     private final Map<String, TokenInfo> tokenToInfo = new HashMap<>();
     private final Map<String, String> userToRoom = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
-    private static final long TOKEN_VALIDITY_MS = 60 * 60 * 1000; // 1 hour
+    private static final long TOKEN_VALIDITY_MS = 60 * 1000;
+
+    private final File tokenFile = new File("tokens.txt");
+
+    public TokenManager() {
+        loadTokensFromFile();
+    }
 
     public String generateToken(String username) {
         lock.lock();
@@ -29,6 +36,7 @@ public class TokenManager {
             String token = UUID.randomUUID().toString();
             long expiresAt = System.currentTimeMillis() + TOKEN_VALIDITY_MS;
             tokenToInfo.put(token, new TokenInfo(username, expiresAt));
+            saveTokensToFile();
             return token;
         } finally {
             lock.unlock();
@@ -75,4 +83,36 @@ public class TokenManager {
             lock.unlock();
         }
     }
+
+    private void saveTokensToFile() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(tokenFile))) {
+            for (Map.Entry<String, TokenInfo> e : tokenToInfo.entrySet()) {
+                pw.println(e.getKey() + "|" + e.getValue().username + "|" + e.getValue().expiresAt);
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving tokens: " + e.getMessage());
+        }
+    }
+
+    private void loadTokensFromFile() {
+        if (!tokenFile.exists()) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(tokenFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\\|");
+                if (parts.length == 3) {
+                    String token = parts[0];
+                    String username = parts[1];
+                    long expiresAt = Long.parseLong(parts[2]);
+                    if (expiresAt > System.currentTimeMillis()) {
+                        tokenToInfo.put(token, new TokenInfo(username, expiresAt));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading tokens: " + e.getMessage());
+        }
+    }
+
 }

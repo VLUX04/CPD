@@ -10,7 +10,8 @@ public class ChatServer {
     try (ServerSocket serverSocket = new ServerSocket(port)) {
         System.out.println("ChatServer running on port " + port);
 
-        AuthenticationManager auth = new AuthenticationManager("users.txt");
+        // Shared managers
+        AuthenticationManager authManager = new AuthenticationManager("users.txt");
         RoomManager roomManager = new RoomManager();
         TokenManager tokenManager = new TokenManager();
 
@@ -20,7 +21,8 @@ public class ChatServer {
 
                 Thread.startVirtualThread(() -> {
                     try {
-                        new ClientHandler(clientSocket, auth, roomManager, tokenManager).run();
+                        ClientHandler handler = new ClientHandler(clientSocket, authManager, roomManager, tokenManager);
+                        handler.run();
                     } catch (Exception e) {
                         System.err.println("Error handling client: " + e.getMessage());
                     }

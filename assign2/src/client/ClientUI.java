@@ -5,21 +5,26 @@ import java.net.*;
 import java.util.Scanner;
 
 public class ClientUI {
-    private Socket socket;
-    private BufferedReader serverIn;
-    private PrintWriter serverOut;
+    private volatile Socket socket;
+    private volatile BufferedReader serverIn;
+    private volatile PrintWriter serverOut;
     private Scanner userIn;
-    private String username;
     private volatile boolean running = true;
+    private volatile boolean connected = false;
+    private String username;
+    private Thread readerThread;
+    private Thread inputThread;
 
     public void setUsername(String username) {
         this.username = username;
     }
 
+    private String getTokenFile() {
+        return "token_" + username + ".txt";
+    }
+
     private String loadToken() {
-        File file = new File("token_" + username + ".txt");
-        if (!file.exists()) return null;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(getTokenFile()))) {
             return reader.readLine();
         } catch (IOException e) {
             return null;
@@ -27,27 +32,84 @@ public class ClientUI {
     }
 
     private void saveToken(String token) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter("token_" + username + ".txt"))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(getTokenFile()))) {
             writer.println(token);
         } catch (IOException e) {
             System.err.println("Could not save token.");
         }
     }
 
-    public void start(String host, int port) {
-        userIn = new Scanner(System.in);
-        while (running) {
-            try {
-                connectAndChat(host, port);
-            } catch (IOException e) {
-                System.out.println("Connection lost. Attempting to reconnect...");
-                try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+    private void deleteToken() {
+        File file = new File(getTokenFile());
+        if (file.exists()) {
+            if (!file.delete()) {
+                System.err.println("Could not delete token file.");
             }
         }
-        close();
     }
 
-    private void connectAndChat(String host, int port) throws IOException {
+    public void start(String host, int port) {
+        userIn = new Scanner(System.in);
+
+        // Start input thread once, independent of connection
+        inputThread = new Thread(() -> {
+            while (running) {
+                if (connected && serverOut != null) {
+                    if (userIn.hasNextLine()) {
+                        String input = userIn.nextLine();
+                        if (input.equalsIgnoreCase("/quit")) {
+                            System.out.println("Exiting...");
+                            running = false;
+                            closeAll();
+                            break;
+                        }
+                        serverOut.println(input);
+                    } else {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException ignored) {}
+                    }
+                } else {
+                    try {
+                        Thread.sleep(300); // Wait while disconnected
+                    } catch (InterruptedException ignored) {}
+                }
+            }
+        });
+        inputThread.setDaemon(true);
+        inputThread.start();
+
+        int reconnectAttempts = 0;
+
+        while (running) {
+            try {
+                connect(host, port);
+                connected = true;
+                startReaderThread();
+
+                reconnectAttempts = 0;
+
+                // Wait here until connection lost
+                while (running && connected) {
+                    Thread.sleep(200);
+                }
+            } catch (IOException e) {
+                System.out.println("Connection lost. Retrying in " + (3 + reconnectAttempts * 2) + " seconds...");
+            } catch (InterruptedException e) {
+                // Ignore interrupt
+            }
+
+            try {
+                closeSocket();
+                Thread.sleep(3000 + reconnectAttempts * 2000);
+                reconnectAttempts++;
+            } catch (InterruptedException | IOException ignored) {}
+        }
+
+        closeAll();
+    }
+
+    private void connect(String host, int port) throws IOException {
         socket = new Socket(host, port);
         serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         serverOut = new PrintWriter(socket.getOutputStream(), true);
@@ -56,58 +118,53 @@ public class ClientUI {
         if (token != null) {
             serverOut.println("yes");
             serverOut.println(token);
-        }
-        else {
+            System.out.println("Attempting token-based login...");
+        } else {
             serverOut.println("no");
         }
 
-        Thread serverReader = new Thread(() -> {
+        System.out.println("Connected to the server.");
+    }
+
+    private void startReaderThread() {
+        readerThread = new Thread(() -> {
             try {
                 String line;
                 while ((line = serverIn.readLine()) != null) {
                     System.out.println(line);
                     if (line.startsWith("Your session token: ")) {
-                        String receivedToken = line.substring("Your session token: ".length()).trim();
-                        saveToken(receivedToken);
+                        String token = line.substring("Your session token: ".length()).trim();
+                        saveToken(token);
                     }
                     if (line.contains("Invalid or expired token")) {
-                        File f = new File("token_" + username + ".txt");
-                        if (f.exists()) f.delete();
+                        deleteToken();
                     }
                 }
+                System.out.println("Lost connection to server.");
             } catch (IOException e) {
-                running = true;
-                try { socket.close(); } catch (IOException ignored) {}
+                System.out.println("Lost connection to server.");
+            } finally {
+                connected = false;
             }
         });
-        serverReader.setDaemon(true);
-        serverReader.start();
-
-        while (running && !socket.isClosed()) {
-            if (!userIn.hasNextLine()) break;
-            String input = userIn.nextLine();
-            serverOut.println(input);
-            if (input.equalsIgnoreCase("/quit")) {
-                System.out.println("Exiting...");
-                running = false;
-                break;
-            }
-        }
+        readerThread.setDaemon(true);
+        readerThread.start();
     }
 
-    private void close() {
+    private void closeSocket() throws IOException {
+        if (socket != null && !socket.isClosed()) socket.close();
+    }
+
+    private void closeAll() {
         try {
-            if (socket != null) socket.close();
-            if (userIn != null) userIn.close();
-        } catch (IOException e) {
-            System.err.println("Error during cleanup.");
-        }
+            closeSocket();
+        } catch (IOException ignored) {}
+        if (userIn != null) userIn.close();
     }
 
     public static void main(String[] args) {
         ClientUI client = new ClientUI();
         try (Scanner scanner = new Scanner(System.in)) {
-
             System.out.print("Enter server IP (default: localhost): ");
             String host = scanner.nextLine().trim();
             if (host.isEmpty()) host = "localhost";

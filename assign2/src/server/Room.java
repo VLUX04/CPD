@@ -32,7 +32,7 @@ public class Room {
     public void broadcast(String message) {
         lock.lock();
         try {
-            history.add(message); // Store every message
+            history.add(message);
             for (ClientHandler client : clients) {
                 client.sendMessage(message);
             }
@@ -53,8 +53,9 @@ public class Room {
     public void join(ClientHandler client) {
         lock.lock();
         try {
-            clients.add(client);
-            broadcast("[" + client.getUsername() + " enters the room]");
+            if (clients.add(client)) {
+                broadcast("[" + client.getUsername() + " enters the room]");
+            }
         } finally {
             lock.unlock();
         }
@@ -63,14 +64,20 @@ public class Room {
     public void leave(ClientHandler client) {
         lock.lock();
         try {
-            clients.remove(client);
-            broadcast("[" + client.getUsername() + " leaves the room]");
+            if (clients.remove(client)) {
+                broadcast("[" + client.getUsername() + " leaves the room]");
+            }
         } finally {
             lock.unlock();
         }
     }
 
     public Set<ClientHandler> getClients() {
-        return clients;
+        lock.lock();
+        try {
+            return new HashSet<>(clients);
+        } finally {
+            lock.unlock();
+        }
     }
 }
