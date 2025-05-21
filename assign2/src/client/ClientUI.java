@@ -12,8 +12,6 @@ public class ClientUI {
     private volatile boolean running = true;
     private volatile boolean connected = false;
     private String username;
-    private Thread readerThread;
-    private Thread inputThread;
 
     public void setUsername(String username) {
         this.username = username;
@@ -52,7 +50,7 @@ public class ClientUI {
         userIn = new Scanner(System.in);
 
         // Start input thread once, independent of connection
-        inputThread = new Thread(() -> {
+        Thread.startVirtualThread(() -> {
             while (running) {
                 if (connected && serverOut != null) {
                     if (userIn.hasNextLine()) {
@@ -76,12 +74,11 @@ public class ClientUI {
                 }
             }
         });
-        inputThread.setDaemon(true);
-        inputThread.start();
 
         int reconnectAttempts = 0;
+        int maxRetries = 3;
 
-        while (running) {
+        while (running && reconnectAttempts < maxRetries) {
             try {
                 connect(host, port);
                 connected = true;
@@ -94,7 +91,7 @@ public class ClientUI {
                     Thread.sleep(200);
                 }
             } catch (IOException e) {
-                System.out.println("Connection lost. Retrying in " + (3 + reconnectAttempts * 2) + " seconds...");
+                System.out.println("Connection still lost. Retrying in " + (3 + reconnectAttempts * 2) + " seconds...");
             } catch (InterruptedException e) {
                 // Ignore interrupt
             }
@@ -104,6 +101,10 @@ public class ClientUI {
                 Thread.sleep(3000 + reconnectAttempts * 2000);
                 reconnectAttempts++;
             } catch (InterruptedException | IOException ignored) {}
+        }
+
+        if (reconnectAttempts >= maxRetries) {
+            System.out.println("Failed to reconnect after " + maxRetries + " attempts. Exiting...");
         }
 
         closeAll();
@@ -127,7 +128,7 @@ public class ClientUI {
     }
 
     private void startReaderThread() {
-        readerThread = new Thread(() -> {
+        Thread.startVirtualThread(() -> {
             try {
                 String line;
                 while ((line = serverIn.readLine()) != null) {
@@ -147,8 +148,6 @@ public class ClientUI {
                 connected = false;
             }
         });
-        readerThread.setDaemon(true);
-        readerThread.start();
     }
 
     private void closeSocket() throws IOException {
