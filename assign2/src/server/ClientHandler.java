@@ -1,6 +1,7 @@
 package server;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.net.Socket;
 
@@ -43,11 +44,18 @@ public class ClientHandler implements Runnable {
 
                 if (msg.equals("/rooms")) {
                     List<String> roomNames = roomManager.getRoomNames();
-                    if (roomNames.isEmpty()) {
-                        sendMessage("No rooms available.");
+                    List<String> visibleRooms = new ArrayList<>();
+                    for (String roomName : roomNames) {
+                        Room room = roomManager.getRoom(roomName);
+                        if (!room.isAIRoom() || (room.isAIRoom() && username.equals(room.getCreator()))) {
+                            visibleRooms.add(roomName);
+                        }
+                    }
+                    if (visibleRooms.isEmpty()) {
+                        sendMessage("No rooms available. Use /join <room> or /createai <name> <prompt>.");
                     } else {
                         sendMessage("Available rooms:");
-                        for (String room : roomNames) {
+                        for (String room : visibleRooms) {
                             sendMessage("- " + room);
                         }
                     }
@@ -57,6 +65,10 @@ public class ClientHandler implements Runnable {
                 if (msg.startsWith("/join ")) {
                     String newRoomName = msg.substring(6).trim();
                     Room newRoom = roomManager.getOrCreateRoom(newRoomName);
+                    if (newRoom.isAIRoom() && !username.equals(newRoom.getCreator())) {
+                        sendMessage("You cannot join this AI room.");
+                        continue;
+                    }
                     currentRoom.leave(this);
                     newRoom.join(this);
                     currentRoom = newRoom;
@@ -72,7 +84,7 @@ public class ClientHandler implements Runnable {
                     } else {
                         String roomName = parts[1];
                         String prompt = parts[2];
-                        Room aiRoom = roomManager.createAIRoom(roomName, prompt);
+                        Room aiRoom = roomManager.createAIRoom(roomName, prompt, username);
                         if (aiRoom == null) {
                             sendMessage("Room already exists.");
                         } else {
@@ -191,11 +203,18 @@ public class ClientHandler implements Runnable {
         }
 
         List<String> roomNames = roomManager.getRoomNames();
-        if (roomNames.isEmpty()) {
+        List<String> visibleRooms = new ArrayList<>();
+        for (String roomName : roomNames) {
+            Room room = roomManager.getRoom(roomName);
+            if (!room.isAIRoom() || (room.isAIRoom() && username.equals(room.getCreator()))) {
+                visibleRooms.add(roomName);
+            }
+        }
+        if (visibleRooms.isEmpty()) {
             sendMessage("No rooms available. Use /join <room> or /createai <name> <prompt>.");
         } else {
             sendMessage("Available rooms:");
-            for (String room : roomNames) {
+            for (String room : visibleRooms) {
                 sendMessage("- " + room);
             }
         }

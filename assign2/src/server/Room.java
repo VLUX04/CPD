@@ -7,14 +7,23 @@ public class Room {
     private final String name;
     private final boolean isAIRoom;
     private final String prompt;
+    private final String creator;
     private final List<String> history = new ArrayList<>();
     private final Set<ClientHandler> clients = new HashSet<>();
     private final ReentrantLock lock = new ReentrantLock();
 
-    public Room(String name, boolean isAIRoom, String prompt) {
+    public Room(String name) {
         this.name = name;
-        this.isAIRoom = isAIRoom;
+        this.isAIRoom = false;
+        this.prompt = null;
+        this.creator = null;
+    }
+
+    public Room(String name, String prompt, String creator) {
+        this.name = name;
+        this.isAIRoom = true;
         this.prompt = prompt;
+        this.creator = creator;
     }
 
     public String getName() {
@@ -27,6 +36,10 @@ public class Room {
 
     public String getPrompt() {
         return prompt;
+    }
+
+    public String getCreator() {
+        return creator;
     }
 
     public void broadcast(String message) {

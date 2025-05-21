@@ -10,19 +10,17 @@ public class RoomManager {
     public Room getOrCreateRoom(String name) {
         lock.lock();
         try {
-            return rooms.computeIfAbsent(name, k -> new Room(name, false, null));
+            return rooms.computeIfAbsent(name, k -> new Room(name));
         } finally {
             lock.unlock();
         }
     }
 
-    public Room createAIRoom(String name, String prompt) {
+    public Room createAIRoom(String name, String prompt, String creator) {
         lock.lock();
         try {
-            if (rooms.containsKey(name)) {
-                return null; 
-            }
-            Room room = new Room(name, true, prompt);
+            if (rooms.containsKey(name)) return null;
+            Room room = new Room(name, prompt, creator);
             rooms.put(name, room);
             return room;
         } finally {
