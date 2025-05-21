@@ -93,7 +93,7 @@ public class ClientHandler implements Runnable {
                             currentRoom = aiRoom;
                             tokenManager.saveUserRoom(username, roomName);
                             sendMessage("AI room '" + roomName + "' created and joined.");
-                            String systemPrompt = "You are a helpful chat bot. Only respond as the bot. Do not continue the conversation as the user. Answer the user's question or statement directly. Here is the first prompt: \n";
+                            String systemPrompt = "You are a helpful chat bot for a chat room. When you answer, reply ONLY with the message text, WITHOUT any username or prefix. Do NOT start your response with \"Bot:\" or any username. The server adds your name (Bot) and the user's name as a prefix automatically to message, which is why in the chat history they appear. Here is the chat history and the latest user message, answer it: \n";
                             sendMessage("Bot is processing...");
                             String aiReply = AIHelper.getBotReply(systemPrompt + prompt, currentRoom.getFullChatHistory());
                             currentRoom.broadcast("Bot: " + aiReply);
@@ -121,7 +121,7 @@ public class ClientHandler implements Runnable {
                 currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
                     sendMessage("Bot is processing...");
-                    String systemPrompt = "You are a helpful chat bot. Only respond as the bot. Do not continue the conversation as the user. Answer the user's question or statement directly, whilst taking into account the chat history. Here is the next prompt: \n";
+                    String systemPrompt = "You are a helpful chat bot for a chat room. When you answer, reply ONLY with the message text, WITHOUT any username or prefix. Do NOT start your response with \"Bot:\" or any username. The server adds your name (Bot) and the user's name as a prefix automatically to message, which is why in the chat history they appear. Here is the chat history and the latest user message, answer it: \n";
                     String aiReply = AIHelper.getBotReply(systemPrompt + currentRoom.getPrompt(), currentRoom.getFullChatHistory());
                     currentRoom.broadcast("Bot: " + aiReply);
                 }
