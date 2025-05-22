@@ -3,6 +3,8 @@ package server;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.Set;
+
 
 public class TokenManager {
     private static class TokenInfo {
@@ -91,6 +93,17 @@ public class TokenManager {
             }
         } catch (IOException e) {
             System.err.println("Error saving tokens: " + e.getMessage());
+        }
+    }
+    public boolean hasToken(String username) {
+        lock.lock();
+        try {
+            for (TokenInfo info : tokenToInfo.values()) {
+                if (info.username.equals(username)) return true;
+            }
+            return false;
+        } finally {
+            lock.unlock();
         }
     }
 

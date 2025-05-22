@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.net.Socket;
+import java.util.Set;
+
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -78,6 +80,51 @@ public class ClientHandler implements Runnable {
                     currentRoom = newRoom;
                     tokenManager.saveUserRoom(username, newRoomName);
                     sendMessage("You joined room: " + newRoom.getName());
+                    continue;
+                }
+                if (msg.equals("/help")) {
+                    sendMessage("📖 Available Commands:");
+                    sendMessage("/help           - Show this help menu");
+                    sendMessage("/whoami         - Show your username and current room");
+                    sendMessage("/rooms          - List available rooms");
+                    sendMessage("/users          - List users in the current room");
+                    sendMessage("/join <room>    - Join or create a room");
+                    sendMessage("/joinpriv       - Join a private room (prompted for password)");
+                    sendMessage("/createpriv     - Create a private room");
+                    sendMessage("/createai       - Create an AI chat room with prompt");
+                    sendMessage("/msg <u> <m>    - Send private message");
+                    sendMessage("/leave          - Leave current room to Lobby");
+                    sendMessage("/quit           - Exit");
+                    continue;
+                }
+
+                if (msg.equals("/users")) {
+                    Set<ClientHandler> users = currentRoom.getClients();
+                    if (users.isEmpty()) {
+                        sendMessage("No users in this room.");
+                    } else {
+                        sendMessage("Users in this room:");
+                        for (ClientHandler user : users) {
+                            sendMessage("- " + user.getUsername());
+                        }
+                    }
+                    continue;
+                }
+                if (msg.equals("/leave")) {
+                    currentRoom.leave(this);
+                    currentRoom = roomManager.getOrCreateRoom("Lobby");
+                    currentRoom.join(this);
+                    tokenManager.saveUserRoom(username, "Lobby");
+                    sendMessage("You left the room and joined the Lobby.");
+                    continue;
+                }
+
+
+
+                if (msg.equals("/whoami")) {
+                    sendMessage("You are logged in as: " + username);
+                    sendMessage("Current room: " + currentRoom.getName());
+                    sendMessage("Token status: " + (tokenManager.hasToken(username) ? "active" : "none"));
                     continue;
                 }
 
