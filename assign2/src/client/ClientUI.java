@@ -178,6 +178,20 @@ public class ClientUI {
     public static void main(String[] args) {
         ClientUI client = new ClientUI();
         try (Scanner scanner = new Scanner(System.in)) {
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println(" \033[1;36mDistributed Systems Assignment 2\033[0m");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println(" 👨‍💻  \033[1mDeveloped by:\033[0m");
+            System.out.println("      🔹 Ana Carolina Coutinho");
+            System.out.println("      🔹 Leonardo Ribeiro");
+            System.out.println("      🔹 José Granja");
+            System.out.println(" 🏫  \033[1mCourse:\033[0m Computação Paralela e Distribuída (CPD)");
+            System.out.println(" 🧾  \033[1mTurma:\033[0m T04");
+            System.out.println(" 👥  \033[1mGroup:\033[0m G16");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ \n");
             System.out.print("🌐 Enter server IP (default: localhost): ");
             String host = scanner.nextLine().trim();
             if (host.isEmpty()) host = "localhost";
