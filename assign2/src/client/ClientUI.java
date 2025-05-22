@@ -61,7 +61,21 @@ public class ClientUI {
                             closeAll();
                             break;
                         }
-                        serverOut.println(input);
+                        if (input.equalsIgnoreCase("/createpriv")) {
+                            System.out.print("Enter room name to create: ");
+                            String roomName = userIn.nextLine().trim();
+                            System.out.print("Enter password for the room: ");
+                            String password = userIn.nextLine().trim();
+                            serverOut.println("/createpriv " + roomName + " " + password);
+                        } else if (input.equalsIgnoreCase("/joinpriv")) {
+                            System.out.print("Enter room name to join: ");
+                            String roomName = userIn.nextLine().trim();
+                            System.out.print("Enter password for the room: ");
+                            String password = userIn.nextLine().trim();
+                            serverOut.println("/joinpriv " + roomName + " " + password);
+                        } else {
+                            serverOut.println(input);
+                        }
                     } else {
                         try {
                             Thread.sleep(100);

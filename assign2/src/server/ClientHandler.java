@@ -48,7 +48,11 @@ public class ClientHandler implements Runnable {
                     for (String roomName : roomNames) {
                         Room room = roomManager.getRoom(roomName);
                         if (!room.isAIRoom() || (room.isAIRoom() && username.equals(room.getCreator()))) {
-                            visibleRooms.add(roomName);
+                            if (room.isPrivate()) {
+                                visibleRooms.add(roomName + " (private)");
+                            } else {
+                                visibleRooms.add(roomName);
+                            }
                         }
                     }
                     if (visibleRooms.isEmpty()) {
@@ -97,6 +101,49 @@ public class ClientHandler implements Runnable {
                             sendMessage("Bot is processing...");
                             String aiReply = AIHelper.getBotReply(systemPrompt + prompt, currentRoom.getFullChatHistory());
                             currentRoom.broadcast("Bot: " + aiReply);
+                        }
+                    }
+                    continue;
+                }
+
+                if (msg.startsWith("/createpriv ")) {
+                    String[] parts = msg.split(" ", 3);
+                    if (parts.length < 3) {
+                        sendMessage("Usage: /createpriv <room_name> <password>");
+                    } else {
+                        String roomName = parts[1];
+                        String password = parts[2];
+                        Room privRoom = roomManager.createPrivateRoom(roomName, password, username);
+                        if (privRoom == null) {
+                            sendMessage("Room already exists.");
+                        } else {
+                            currentRoom.leave(this);
+                            privRoom.join(this);
+                            currentRoom = privRoom;
+                            tokenManager.saveUserRoom(username, roomName);
+                            sendMessage("Private room '" + roomName + "' created and joined.");
+                        }
+                    }
+                    continue;
+                }
+
+                if (msg.startsWith("/joinpriv ")) {
+                    String[] parts = msg.split(" ", 3);
+                    if (parts.length < 3) {
+                        sendMessage("Usage: /joinpriv <room_name> <password>");
+                    } else {
+                        String roomName = parts[1];
+                        String password = parts[2];
+
+                        Room targetRoom = roomManager.getRoomIfPasswordMatches(roomName, password);
+                        if (targetRoom == null) {
+                            sendMessage("Wrong password or room doesn't exist.");
+                        } else {
+                            currentRoom.leave(this);
+                            targetRoom.join(this);
+                            currentRoom = targetRoom;
+                            tokenManager.saveUserRoom(username, roomName);
+                            sendMessage("You joined private room: " + roomName);
                         }
                     }
                     continue;

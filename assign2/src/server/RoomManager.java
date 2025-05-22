@@ -28,6 +28,31 @@ public class RoomManager {
         }
     }
 
+    public Room createPrivateRoom(String name, String password, String creator) {
+        lock.lock();
+        try {
+            if (rooms.containsKey(name)) return null;
+            Room room = new Room(name, password, creator, null); // sala privada normal
+            rooms.put(name, room);
+            return room;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Room getRoomIfPasswordMatches(String name, String password) {
+        lock.lock();
+        try {
+            Room room = rooms.get(name);
+            if (room != null && room.isPrivate() && room.checkPassword(password)) {
+                return room;
+            }
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public ClientHandler findUserGlobally(String username) {
         lock.lock();
         try {
@@ -62,3 +87,4 @@ public class RoomManager {
         }
     }
 }
+            
