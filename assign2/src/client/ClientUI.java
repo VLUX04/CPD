@@ -33,7 +33,7 @@ public class ClientUI {
         try (PrintWriter writer = new PrintWriter(new FileWriter(getTokenFile()))) {
             writer.println(token);
         } catch (IOException e) {
-            System.err.println("Could not save token.");
+            System.err.println("❌ Could not save token.");
         }
     }
 
@@ -41,7 +41,7 @@ public class ClientUI {
         File file = new File(getTokenFile());
         if (file.exists()) {
             if (!file.delete()) {
-                System.err.println("Could not delete token file.");
+                System.err.println("❌ Could not delete token file.");
             }
         }
     }
@@ -56,21 +56,21 @@ public class ClientUI {
                     if (userIn.hasNextLine()) {
                         String input = userIn.nextLine();
                         if (input.equalsIgnoreCase("/quit")) {
-                            System.out.println("Exiting...");
+                            System.out.println("👋 Exiting...");
                             running = false;
                             closeAll();
                             break;
                         }
                         if (input.equalsIgnoreCase("/createpriv")) {
-                            System.out.print("Enter room name to create: ");
+                            System.out.print("🔒 Room name: ");
                             String roomName = userIn.nextLine().trim();
-                            System.out.print("Enter password for the room: ");
+                            System.out.print("🗝️  Password: ");
                             String password = userIn.nextLine().trim();
                             serverOut.println("/createpriv " + roomName + " " + password);
                         } else if (input.equalsIgnoreCase("/joinpriv")) {
-                            System.out.print("Enter room name to join: ");
+                            System.out.print("🔒 Room name: ");
                             String roomName = userIn.nextLine().trim();
-                            System.out.print("Enter password for the room: ");
+                            System.out.print("🗝️  Password: ");
                             String password = userIn.nextLine().trim();
                             serverOut.println("/joinpriv " + roomName + " " + password);
                         } else {
@@ -105,7 +105,7 @@ public class ClientUI {
                     Thread.sleep(200);
                 }
             } catch (IOException e) {
-                System.out.println("Connection still lost. Retrying in " + (3 + reconnectAttempts * 2) + " seconds...");
+                System.out.println("❌ Connection lost. Retrying in " + (3 + reconnectAttempts * 2) + "s...");
             } catch (InterruptedException e) {
                 // Ignore interrupt
             }
@@ -118,7 +118,7 @@ public class ClientUI {
         }
 
         if (reconnectAttempts >= maxRetries) {
-            System.out.println("Failed to reconnect after " + maxRetries + " attempts. Exiting...");
+            System.out.println("❌ Failed to reconnect after " + maxRetries + " attempts. Exiting...");
         }
 
         closeAll();
@@ -133,12 +133,12 @@ public class ClientUI {
         if (token != null) {
             serverOut.println("yes");
             serverOut.println(token);
-            System.out.println("Attempting token-based login...");
+            System.out.println("🔐 Attempting token-based login...");
         } else {
             serverOut.println("no");
         }
 
-        System.out.println("Connected to the server.");
+        System.out.println("✅ Connected to the server.");
     }
 
     private void startReaderThread() {
@@ -147,17 +147,17 @@ public class ClientUI {
                 String line;
                 while ((line = serverIn.readLine()) != null) {
                     System.out.println(line);
-                    if (line.startsWith("Your session token: ")) {
-                        String token = line.substring("Your session token: ".length()).trim();
+                    if (line.startsWith("🔖 Your session token: ")) {
+                        String token = line.substring("🔖 Your session token: ".length()).trim();
                         saveToken(token);
                     }
-                    if (line.contains("Invalid or expired token")) {
+                    if (line.contains("❌ Invalid or expired token")) {
                         deleteToken();
                     }
                 }
-                System.out.println("Lost connection to server.");
+                System.out.println("⚠️  Lost connection to server.");
             } catch (IOException e) {
-                System.out.println("Lost connection to server.");
+                System.out.println("⚠️  Lost connection to server.");
             } finally {
                 connected = false;
             }
@@ -178,15 +178,15 @@ public class ClientUI {
     public static void main(String[] args) {
         ClientUI client = new ClientUI();
         try (Scanner scanner = new Scanner(System.in)) {
-            System.out.print("Enter server IP (default: localhost): ");
+            System.out.print("🌐 Enter server IP (default: localhost): ");
             String host = scanner.nextLine().trim();
             if (host.isEmpty()) host = "localhost";
 
-            System.out.print("Enter port (default: 12345): ");
+            System.out.print("🔌 Enter port (default: 12345): ");
             String portStr = scanner.nextLine().trim();
             int port = portStr.isEmpty() ? 12345 : Integer.parseInt(portStr);
 
-            System.out.print("Enter your username: ");
+            System.out.print("🙋 Enter your username: ");
             String username = scanner.nextLine().trim();
             client.setUsername(username);
 

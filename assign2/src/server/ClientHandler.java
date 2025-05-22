@@ -51,14 +51,16 @@ public class ClientHandler implements Runnable {
                         Room room = roomManager.getRoom(roomName);
                         if (!room.isAIRoom() || (room.isAIRoom() && username.equals(room.getCreator()))) {
                             if (room.isPrivate()) {
-                                visibleRooms.add(roomName + " (private)");
+                                visibleRooms.add("🔒 " + roomName);
                             } else {
-                                visibleRooms.add(roomName);
+                                visibleRooms.add("🟢 " + roomName);
                             }
                         }
                     }
+                    sendMessage("📋 \033[1mAvailable Rooms:\033[0m");
+
                     if (visibleRooms.isEmpty()) {
-                        sendMessage("No rooms available. Use /join <room> or /createai <name> <prompt>.");
+                        sendMessage("❌ No rooms available. Use /join <room> or /createpriv <room>.");
                     } else {
                         sendMessage("Available rooms:");
                         for (String room : visibleRooms) {
@@ -72,38 +74,41 @@ public class ClientHandler implements Runnable {
                     String newRoomName = msg.substring(6).trim();
                     Room newRoom = roomManager.getOrCreateRoom(newRoomName);
                     if (newRoom.isAIRoom() && !username.equals(newRoom.getCreator())) {
-                        sendMessage("You cannot join this AI room.");
+                        sendMessage("❌ You cannot join this AI room.");
                         continue;
                     }
                     currentRoom.leave(this);
                     newRoom.join(this);
                     currentRoom = newRoom;
                     tokenManager.saveUserRoom(username, newRoomName);
-                    sendMessage("You joined room: " + newRoom.getName());
+                    sendMessage("✅ You have joined room: \033[1m" + newRoom.getName() + "\033[0m 🎉");
                     continue;
                 }
                 if (msg.equals("/help")) {
-                    sendMessage("📖 Available Commands:");
-                    sendMessage("/help           - Show this help menu");
-                    sendMessage("/whoami         - Show your username and current room");
-                    sendMessage("/rooms          - List available rooms");
-                    sendMessage("/users          - List users in the current room");
-                    sendMessage("/join <room>    - Join or create a room");
-                    sendMessage("/joinpriv       - Join a private room (prompted for password)");
-                    sendMessage("/createpriv     - Create a private room");
-                    sendMessage("/createai       - Create an AI chat room with prompt");
-                    sendMessage("/msg <u> <m>    - Send private message");
-                    sendMessage("/leave          - Leave current room to Lobby");
-                    sendMessage("/quit           - Exit");
+                    sendMessage("📚 \033[1mAvailable Commands\033[0m ━━━━━━━━━━━━━━");
+                    sendMessage("🔹 \033[1m/help\033[0m           → Show this help menu");
+                    sendMessage("🔹 \033[1m/whoami\033[0m         → Show your username and current room");
+                    sendMessage("🔹 \033[1m/rooms\033[0m          → List all available rooms");
+                    sendMessage("🔹 \033[1m/users\033[0m          → List users in the current room");
+                    sendMessage("🔹 \033[1m/join <room>\033[0m    → Join or create a public room");
+                    sendMessage("🔹 \033[1m/joinpriv\033[0m       → Join a private room (via prompt)");
+                    sendMessage("🔹 \033[1m/createpriv\033[0m     → Create a private room");
+                    sendMessage("🔹 \033[1m/createai <r> <p>\033[0m → Create AI chat room with prompt");
+                    sendMessage("🔹 \033[1m/msg <u> <msg>\033[0m  → Send a private message");
+                    sendMessage("🔹 \033[1m/leave\033[0m          → Leave current room to Lobby");
+                    sendMessage("🔹 \033[1m/clear\033[0m          → Clear terminal (client-side)");
+                    sendMessage("🔹 \033[1m/quit\033[0m           → Exit the chat");
+                    sendMessage("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                     continue;
                 }
+
 
                 if (msg.equals("/users")) {
                     Set<ClientHandler> users = currentRoom.getClients();
                     if (users.isEmpty()) {
                         sendMessage("No users in this room.");
                     } else {
-                        sendMessage("Users in this room:");
+                        sendMessage("👥 \033[1mUsers in '" + currentRoom.getName() + "':\033[0m");
                         for (ClientHandler user : users) {
                             sendMessage("- " + user.getUsername());
                         }
@@ -115,18 +120,19 @@ public class ClientHandler implements Runnable {
                     currentRoom = roomManager.getOrCreateRoom("Lobby");
                     currentRoom.join(this);
                     tokenManager.saveUserRoom(username, "Lobby");
-                    sendMessage("You left the room and joined the Lobby.");
+                    sendMessage("↩️  You left the room and joined the \033[1mLobby\033[0m.");
                     continue;
                 }
 
 
 
                 if (msg.equals("/whoami")) {
-                    sendMessage("You are logged in as: " + username);
-                    sendMessage("Current room: " + currentRoom.getName());
-                    sendMessage("Token status: " + (tokenManager.hasToken(username) ? "active" : "none"));
+                    sendMessage("🧍 \033[1mUsername:\033[0m " + username);
+                    sendMessage("🗂️  \033[1mCurrent room:\033[0m " + currentRoom.getName());
+                    sendMessage("🔐 \033[1mToken status:\033[0m " + (tokenManager.hasToken(username) ? "active ✅" : "none ❌"));
                     continue;
                 }
+
 
                 if (msg.startsWith("/createai ")) {
                     String[] parts = msg.split(" ", 3);
@@ -137,7 +143,7 @@ public class ClientHandler implements Runnable {
                         String prompt = parts[2];
                         Room aiRoom = roomManager.createAIRoom(roomName, prompt, username);
                         if (aiRoom == null) {
-                            sendMessage("Room already exists.");
+                            sendMessage("❌ Room already exists.");
                         } else {
                             currentRoom.leave(this);
                             aiRoom.join(this);
@@ -162,13 +168,13 @@ public class ClientHandler implements Runnable {
                         String password = parts[2];
                         Room privRoom = roomManager.createPrivateRoom(roomName, password, username);
                         if (privRoom == null) {
-                            sendMessage("Room already exists.");
+                            sendMessage("❌ Room already exists.");
                         } else {
                             currentRoom.leave(this);
                             privRoom.join(this);
                             currentRoom = privRoom;
                             tokenManager.saveUserRoom(username, roomName);
-                            sendMessage("Private room '" + roomName + "' created and joined.");
+                            sendMessage("🔒 Private room '\033[1m" + roomName + "\033[0m' created and joined.");
                         }
                     }
                     continue;
@@ -184,13 +190,13 @@ public class ClientHandler implements Runnable {
 
                         Room targetRoom = roomManager.getRoomIfPasswordMatches(roomName, password);
                         if (targetRoom == null) {
-                            sendMessage("Wrong password or room doesn't exist.");
+                            sendMessage("❌ Wrong password or room doesn't exist.");
                         } else {
                             currentRoom.leave(this);
                             targetRoom.join(this);
                             currentRoom = targetRoom;
                             tokenManager.saveUserRoom(username, roomName);
-                            sendMessage("You joined private room: " + roomName);
+                            sendMessage("✅ You joined private room: \033[1m" + roomName + "\033[0m");
                         }
                     }
                     continue;
@@ -203,10 +209,10 @@ public class ClientHandler implements Runnable {
                         String privateMsg = parts[2];
                         ClientHandler targetClient = roomManager.findUserGlobally(target);
                         if (targetClient != null) {
-                            targetClient.sendMessage("[PM from " + username + "]: " + privateMsg);
-                            sendMessage("[PM to " + target + "]: " + privateMsg);
+                            targetClient.sendMessage("📩 [PM from " + username + "]: " + privateMsg);
+                            sendMessage("📤 [PM to " + target + "]: " + privateMsg);
                         } else {
-                            sendMessage("User not found.");
+                            sendMessage("❌ User not found.");
                         }
                     }
                     continue;
@@ -214,10 +220,10 @@ public class ClientHandler implements Runnable {
 
                 currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
-                    sendMessage("Bot is processing...");
+                    sendMessage("🤖 Bot is processing...");
                     String systemPrompt = "You are a helpful chat bot for a chat room. When you answer, reply ONLY with the message text, WITHOUT any username or prefix. Do NOT start your response with \"Bot:\" or any username. The server adds your name (Bot) and the user's name as a prefix automatically to message, which is why in the chat history they appear. Here is the chat history and the latest user message, answer it: \n";
                     String aiReply = AIHelper.getBotReply(systemPrompt + currentRoom.getPrompt(), currentRoom.getFullChatHistory());
-                    currentRoom.broadcast("Bot: " + aiReply);
+                    currentRoom.broadcast("\033[1mBot\033[0m: " + aiReply);
                 }
             }
         } catch (IOException e) {
@@ -245,7 +251,7 @@ public class ClientHandler implements Runnable {
             String userFromToken = tokenManager.getUsernameFromToken(token);
             if (userFromToken != null) {
                 this.username = userFromToken;
-                sendMessage("Token authentication successful! Welcome back, " + username + ".");
+                sendMessage("🔓 Token authentication successful! Welcome back, \033[1m" + username + "\033[0m.");
 
                 String roomName = tokenManager.getUserRoom(username);
                 if (roomName != null && !roomName.isBlank()) {
@@ -260,26 +266,26 @@ public class ClientHandler implements Runnable {
                 if (currentRoom != null) {
                     String history = currentRoom.getFullChatHistory();
                     if (history != null && !history.isBlank()) {
-                        sendMessage("---- Chat History ----\n" + history);
+                        sendMessage("📜 \033[1mChat History:\033[0m\n" + history);
                     }
                     currentRoom.join(this);
                 }
                 return;
             } else {
-                sendMessage("Invalid token. Switching to login...");
+                sendMessage("❌ Invalid token. Switching to manual login...");
             }
         }
 
-        sendMessage("Enter your username:");
+        sendMessage("🔐 Enter your username:");
         String userName = in.readLine();
-        sendMessage("Enter your password:");
+        sendMessage("🔑 Enter your password:");
         String password = in.readLine();
 
         if (authManager.authenticate(userName, password)) {
             this.username = userName;
-            sendMessage("Authentication successful!");
+            sendMessage("✅ Authentication successful! Welcome, \033[1m" + username + "\033[0m.");
             String token = tokenManager.generateToken(userName);
-            sendMessage("Your session token: " + token);
+            sendMessage("🔖 Your session token: " + token);
 
             currentRoom = roomManager.getOrCreateRoom("Lobby");
             tokenManager.saveUserRoom(username, "Lobby");
@@ -288,11 +294,11 @@ public class ClientHandler implements Runnable {
                 currentRoom.join(this);
                 String history = currentRoom.getFullChatHistory();
                 if (history != null && !history.isBlank()) {
-                    sendMessage("---- Chat History ----\n" + history);
+                    sendMessage("📜 \033[1mChat History:\033[0m\n" + history);
                 }
             }
         } else {
-            sendMessage("Authentication failed! Try again.");
+            sendMessage("❌ Authentication failed. Try again.");
             authenticateUser(in);
         }
 
@@ -305,9 +311,9 @@ public class ClientHandler implements Runnable {
             }
         }
         if (visibleRooms.isEmpty()) {
-            sendMessage("No rooms available. Use /join <room> or /createai <name> <prompt>.");
+            sendMessage("❗ No rooms available. Use /join <room> or /createai <name> <prompt>.");
         } else {
-            sendMessage("Available rooms:");
+            sendMessage("📋 Available rooms:");
             for (String room : visibleRooms) {
                 sendMessage("- " + room);
             }
