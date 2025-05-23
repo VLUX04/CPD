@@ -23,7 +23,7 @@ public class ChatServer {
             SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
             SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
 
-            AuthenticationManager authManager = new AuthenticationManager("users.txt");
+            AuthenticationManager authManager = new AuthenticationManager("helpers/users.txt");
             RoomManager roomManager = new RoomManager();
             TokenManager tokenManager = new TokenManager();
 

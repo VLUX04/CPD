@@ -93,8 +93,6 @@ public class ClientUI {
                 }
             }
         });
-        inputThread.setDaemon(true);
-        inputThread.start();
 
         int reconnectAttempts = 0;
         int maxRetries = 3;
@@ -184,8 +182,6 @@ public class ClientUI {
                 connected = false;
             }
         });
-        readerThread.setDaemon(true);
-        readerThread.start();
     }
 
     private void closeSocket() throws IOException {
