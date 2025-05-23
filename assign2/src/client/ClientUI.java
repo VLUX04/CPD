@@ -2,7 +2,10 @@ package client;
 
 import java.io.*;
 import java.net.*;
+import java.security.KeyStore;
 import java.util.Scanner;
+
+import javax.net.ssl.*;
 
 public class ClientUI {
     private volatile Socket socket;
@@ -12,6 +15,8 @@ public class ClientUI {
     private volatile boolean running = true;
     private volatile boolean connected = false;
     private String username;
+    private Thread readerThread;
+    private Thread inputThread;
 
     public void setUsername(String username) {
         this.username = username;
@@ -83,11 +88,13 @@ public class ClientUI {
                     }
                 } else {
                     try {
-                        Thread.sleep(300); // Wait while disconnected
+                        Thread.sleep(300);
                     } catch (InterruptedException ignored) {}
                 }
             }
         });
+        inputThread.setDaemon(true);
+        inputThread.start();
 
         int reconnectAttempts = 0;
         int maxRetries = 3;
@@ -100,7 +107,6 @@ public class ClientUI {
 
                 reconnectAttempts = 0;
 
-                // Wait here until connection lost
                 while (running && connected) {
                     Thread.sleep(200);
                 }
@@ -125,9 +131,21 @@ public class ClientUI {
     }
 
     private void connect(String host, int port) throws IOException {
-        socket = new Socket(host, port);
-        serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        serverOut = new PrintWriter(socket.getOutputStream(), true);
+        try {
+            KeyStore trustStore = KeyStore.getInstance("PKCS12");
+            FileInputStream trustStoreStream = new FileInputStream("serverkeystore.jks");
+            trustStore.load(trustStoreStream, "cpdg162025".toCharArray());
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(trustStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+
+            SSLSocketFactory ssf = sslContext.getSocketFactory();
+            socket = ssf.createSocket(host, port);
+            serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            serverOut = new PrintWriter(socket.getOutputStream(), true);
 
         String token = loadToken();
         if (token != null) {
@@ -139,6 +157,10 @@ public class ClientUI {
         }
 
         System.out.println("✅ Connected to the server.");
+
+        } catch (Exception e) {
+            throw new IOException("SSL setup failed: " + e.getMessage(), e);
+        }
     }
 
     private void startReaderThread() {
@@ -162,6 +184,8 @@ public class ClientUI {
                 connected = false;
             }
         });
+        readerThread.setDaemon(true);
+        readerThread.start();
     }
 
     private void closeSocket() throws IOException {
