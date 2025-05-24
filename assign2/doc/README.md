@@ -1,3 +1,4 @@
+
 # 📄 CPD Project 2 — README
 
 ## Overview
@@ -13,7 +14,57 @@ Technologies used:
 
 ---
 
-## 🚀 Running the System
+## ⚙️ Setup and Dependencies
+
+### 1. Install Java 21+
+
+Ensure Java 21 or newer is installed. You can check with:
+
+```bash
+java --version
+```
+
+If needed, download it from: https://jdk.java.net/21/
+
+### 2. Install Ollama for AI Rooms
+
+To enable the AI Bot feature, install [Ollama](https://ollama.com/) and run a model locally (e.g., `llama2`):
+
+```bash
+ollama run llama2
+```
+
+---
+
+## 🐳 Docker 
+
+You can run the server and client inside Docker containers to simplify setup.
+
+### Build the Docker Image
+
+```bash
+docker build -t cpd-chat .
+```
+
+### Run the Server
+
+```bash
+docker run -it --rm -p 12345:12345 --name chat-server cpd-chat java server.ChatServer
+```
+
+### Run a Client
+
+In a separate terminal:
+
+```bash
+docker run -it --rm --network host --name chat-client cpd-chat java client.ClientUI
+```
+
+> ℹ️ `--network host` is required to connect to the host server on localhost. For Windows/macOS, adjust accordingly or use Docker Compose.
+
+---
+
+## 🚀 Running the System (Without Docker)
 
 ### 1. Compile All Files
 
@@ -62,7 +113,6 @@ The menu includes:
 /users          List users in current room
 /whoami         Display current identity and room
 /leave          Return to Lobby
-/clear          Clear terminal screen
 /quit           Disconnect client
 ```
 
@@ -114,6 +164,5 @@ The menu includes:
   * Leonardo Ribeiro
   * José Granja
 
----
 
-Enjoy chatting 🚀
+
