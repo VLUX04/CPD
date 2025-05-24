@@ -14,7 +14,6 @@ public class ClientHandler implements Runnable {
     private final TokenManager tokenManager;
     private PrintWriter out;
     private String username;
-    private volatile boolean aiProcessing = false;
     private Room currentRoom;
 
     public ClientHandler(Socket socket, AuthenticationManager authManager, RoomManager roomManager, TokenManager tokenManager) {
@@ -42,13 +41,6 @@ public class ClientHandler implements Runnable {
             while ((msg = in.readLine()) != null) {
                 String msgTest = msg.trim();
                 if (msgTest.isEmpty()) continue;
-
-                synchronized (this) {
-                    if (aiProcessing) {
-                        sendMessage("⏳ Please wait, the AI is still processing your previous message...");
-                        continue;
-                    }
-                }
 
                 tokenManager.saveUserRoom(username, currentRoom.getName());
 
@@ -158,15 +150,9 @@ public class ClientHandler implements Runnable {
                             currentRoom = aiRoom;
                             tokenManager.saveUserRoom(username, roomName);
                             sendMessage("AI room '" + roomName + "' created and joined.");
-                            synchronized (this) {
-                                aiProcessing = true;
-                            }
                             String systemPrompt = "You are a helpful chat bot for a chat room. When you answer, reply ONLY with the message text, WITHOUT any username or prefix. Do NOT start your response with \"Bot:\" or any username. The server adds your name (Bot) and the user's name as a prefix automatically to message, which is why in the chat history they appear. Here is the chat history and the latest user message, answer it: \n";
                             String aiReply = AIHelper.getBotReply(systemPrompt + prompt, currentRoom.getFullChatHistory());
                             currentRoom.broadcast("Bot: " + aiReply);
-                            synchronized (this) {
-                                aiProcessing = false;
-                            }
                         }
                     }
                     continue;
@@ -233,15 +219,9 @@ public class ClientHandler implements Runnable {
 
                 currentRoom.broadcast(username + ": " + msg);
                 if (currentRoom.isAIRoom()) {
-                    synchronized (this) {
-                        aiProcessing = true;
-                    }
                     String systemPrompt = "You are a helpful chat bot for a chat room. When you answer, reply ONLY with the message text, WITHOUT any username or prefix. Do NOT start your response with \"Bot:\" or any username. The server adds your name (Bot) and the user's name as a prefix automatically to message, which is why in the chat history they appear. Here is the chat history and the latest user message, answer it: \n";
                     String aiReply = AIHelper.getBotReply(systemPrompt + currentRoom.getPrompt(), currentRoom.getFullChatHistory());
                     currentRoom.broadcast("\033[1mBot\033[0m: " + aiReply);
-                    synchronized (this) {
-                        aiProcessing = false;
-                    }
                 }
             }
         } catch (IOException e) {
