@@ -84,6 +84,7 @@ The menu includes:
 /whoami         Display current identity and room
 /leave          Return to Lobby
 /quit           Disconnect client
+/logout         Log out and delete session token
 ```
 
 ---
