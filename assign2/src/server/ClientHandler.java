@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable {
     public void run() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             out = new PrintWriter(socket.getOutputStream(), true);
-            authenticateUser(in);
+            authenticateUser(in, false);
 
             String msg;
             while ((msg = in.readLine()) != null) {
@@ -82,6 +82,18 @@ public class ClientHandler implements Runnable {
                     currentRoom = newRoom;
                     tokenManager.saveUserRoom(username, newRoomName);
                     sendMessage("✅ You have joined room: \033[1m" + newRoom.getName() + "\033[0m 🎉");
+                    continue;
+                }
+                if (msg.equals("/logout")) {
+                    tokenManager.deleteToken(username);   
+                    if (currentRoom != null) {
+                        currentRoom.leave(this);
+                    }
+                    sendMessage("🔒 You have been logged out.");
+                    username = null;
+                    currentRoom = null;
+
+                    authenticateUser(in, true);
                     continue;
                 }
                 if (msg.equals("/help")) {
@@ -241,8 +253,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void authenticateUser(BufferedReader in) throws IOException {
-        String mode = in.readLine();
+    private void authenticateUser(BufferedReader in, boolean firstAuth) throws IOException {
+        String mode = "";
+        if(!firstAuth) mode = in.readLine();
 
         if ("yes".equalsIgnoreCase(mode)) {
             String token = in.readLine();
@@ -255,8 +268,7 @@ public class ClientHandler implements Runnable {
                 if (roomName != null && !roomName.isBlank()) {
                     currentRoom = roomManager.getOrCreateRoom(roomName);
                 } else {
-                    roomName = "Lobby";
-                    currentRoom = roomManager.getOrCreateRoom("Lobby");
+                    currentRoom = roomManager.getRoom("Lobby");
                 }
 
                 tokenManager.saveUserRoom(username, roomName); 
@@ -273,32 +285,41 @@ public class ClientHandler implements Runnable {
                 sendMessage("❌ Invalid token. Switching to manual login...");
             }
         }
+        
+        while(true){
+            sendMessage("=============== Please authenticate: ===============");
+            sendMessage("🔐 Enter your username:");
+            String userName = in.readLine();
+            sendMessage("🔑 Enter your password:");
+            String password = in.readLine();
 
-        sendMessage("🔐 Enter your username:");
-        String userName = in.readLine();
-        sendMessage("🔑 Enter your password:");
-        String password = in.readLine();
+            if (authManager.authenticate(userName, password)) {
+                this.username = userName;
+                sendMessage("✅ Authentication successful! Welcome, \033[1m" + username + "\033[0m.");
+                String token = tokenManager.generateToken(userName);
+                sendMessage("🔖 Your session token: " + token);
 
-        if (authManager.authenticate(userName, password)) {
-            this.username = userName;
-            sendMessage("✅ Authentication successful! Welcome, \033[1m" + username + "\033[0m.");
-            String token = tokenManager.generateToken(userName);
-            sendMessage("🔖 Your session token: " + token);
-
-            currentRoom = roomManager.getOrCreateRoom("Lobby");
-            tokenManager.saveUserRoom(username, "Lobby");
-
-            if (currentRoom != null) {
-                currentRoom.join(this);
-                String history = currentRoom.getFullChatHistory();
-                if (history != null && !history.isBlank()) {
-                    sendMessage("📜 \033[1mChat History:\033[0m\n" + history);
+                if (roomManager.getRoom("Lobby") == null) {
+                    currentRoom = roomManager.getOrCreateRoom("Lobby");
+                } else {
+                    currentRoom = roomManager.getRoom("Lobby");
                 }
+                
+                tokenManager.saveUserRoom(username, "Lobby");
+
+                if (currentRoom != null) {
+                    currentRoom.join(this);
+                    String history = currentRoom.getFullChatHistory();
+                    if (history != null && !history.isBlank()) {
+                        sendMessage("📜 \033[1mChat History:\033[0m\n" + history);
+                    }
+                }
+                break;
+            } else {
+                sendMessage("❌ Authentication failed. Try again.");
             }
-        } else {
-            sendMessage("❌ Authentication failed. Try again.");
-            authenticateUser(in);
         }
+        
 
         List<String> roomNames = roomManager.getRoomNames();
         List<String> visibleRooms = new ArrayList<>();

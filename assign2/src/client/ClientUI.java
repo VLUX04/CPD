@@ -15,8 +15,6 @@ public class ClientUI {
     private volatile boolean running = true;
     private volatile boolean connected = false;
     private String username;
-    private Thread readerThread;
-    private Thread inputThread;
 
     public void setUsername(String username) {
         this.username = username;
@@ -54,7 +52,6 @@ public class ClientUI {
     public void start(String host, int port) {
         userIn = new Scanner(System.in);
 
-        // Start input thread once, independent of connection
         Thread.startVirtualThread(() -> {
             while (running) {
                 if (connected && serverOut != null) {
@@ -111,7 +108,6 @@ public class ClientUI {
             } catch (IOException e) {
                 System.out.println("❌ Connection lost. Retrying in " + (3 + reconnectAttempts * 2) + "s...");
             } catch (InterruptedException e) {
-                // Ignore interrupt
             }
 
             try {

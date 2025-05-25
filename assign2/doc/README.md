@@ -24,60 +24,30 @@ Ensure Java 21 or newer is installed. You can check with:
 java --version
 ```
 
-If needed, download it from: https://jdk.java.net/21/
-
-### 2. Install Ollama for AI Rooms
-
-To enable the AI Bot feature, install [Ollama](https://ollama.com/) and run a model locally (e.g., `llama2`):
-
-```bash
-ollama run llama2
-```
-
----
-
 ## 🐳 Docker 
 
-You can run the server and client inside Docker containers to simplify setup.
+### Run the Docker Container
 
-### Build the Docker Image
-
-```bash
-docker build -t cpd-chat .
-```
-
-### Run the Server
+To enable the AI Bot feature, Ollama is required. The Docker setup will automatically download and run Ollama 3 when you start the server.
 
 ```bash
-docker run -it --rm -p 12345:12345 --name chat-server cpd-chat java server.ChatServer
+sudo docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama14 ollama/ollama
 ```
 
-### Run a Client
-
-In a separate terminal:
-
-```bash
-docker run -it --rm --network host --name chat-client cpd-chat java client.ClientUI
-```
-
-> ℹ️ `--network host` is required to connect to the host server on localhost. For Windows/macOS, adjust accordingly or use Docker Compose.
-
----
-
-## 🚀 Running the System (Without Docker)
+## 🚀 Running the System
 
 ### 1. Compile All Files
 
-Assuming you're in the root of the project:
+Assuming you're in the assign/src folder of the project:
 
 ```bash
-javac server/*.java client/*.java
+javac -cp "libs/*" server/*.java client/*.java
 ```
 
 ### 2. Start the Server
 
 ```bash
-java server.ChatServer
+java -cp ".:libs/*" server.ChatServer
 ```
 
 By default, it listens on port `12345`.
@@ -85,7 +55,7 @@ By default, it listens on port `12345`.
 ### 3. Start a Client
 
 ```bash
-java client.ClientUI
+java -cp ".:libs/*" client.ClientUI
 ```
 
 Each client will display an interactive menu for login and room selection.
@@ -122,7 +92,7 @@ The menu includes:
 
 * First login is done with username/password (loaded or hardcoded by `AuthenticationManager`)
 * Session token is saved on disk in `helpers/token_<username>.txt`
-* Upon reconnect, token is used for seamless re-entry (without typing credentials)
+* Upon reconnect, if it is still valid (hasn't expired), token is used for seamless re-entry (without typing credentials)
 
 ---
 
@@ -160,9 +130,9 @@ The menu includes:
 * **Grupo**: G16
 * **Authors**:
 
-  * Ana Carolina Coutinho
-  * Leonardo Ribeiro
-  * José Granja
+  * Ana Carolina Coutinho up202108685
+  * Leonardo Ribeiro up202205144
+  * José Granja up202205143
 
 
 

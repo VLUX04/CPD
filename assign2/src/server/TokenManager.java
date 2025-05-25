@@ -3,7 +3,6 @@ package server;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.Set;
 
 
 public class TokenManager {
@@ -19,7 +18,7 @@ public class TokenManager {
     private final Map<String, TokenInfo> tokenToInfo = new HashMap<>();
     private final Map<String, String> userToRoom = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
-    private static final long TOKEN_VALIDITY_MS = 60 * 1000;
+    private static final long TOKEN_VALIDITY_MS = 5 * 60 * 1000;
 
     private final File tokenFile = new File("helpers/tokens.txt");
 
@@ -125,6 +124,25 @@ public class TokenManager {
             }
         } catch (IOException e) {
             System.err.println("Error loading tokens: " + e.getMessage());
+        }
+    }
+    public void deleteToken(String username) {
+        lock.lock();
+        try {
+            Iterator<Map.Entry<String, TokenInfo>> iterator = tokenToInfo.entrySet().iterator();
+            boolean removed = false;
+            while (iterator.hasNext()) {
+                Map.Entry<String, TokenInfo> entry = iterator.next();
+                if (entry.getValue().username.equals(username)) {
+                    iterator.remove();
+                    removed = true;
+                }
+            }
+            if (removed) {
+                saveTokensToFile();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
