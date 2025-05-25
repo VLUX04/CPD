@@ -108,7 +108,7 @@ public class ClientHandler implements Runnable {
                     sendMessage("🔹 \033[1m/createai <r> <p>\033[0m → Create AI chat room with prompt");
                     sendMessage("🔹 \033[1m/msg <u> <msg>\033[0m  → Send a private message");
                     sendMessage("🔹 \033[1m/leave\033[0m          → Leave current room to Lobby");
-                    sendMessage("🔹 \033[1m/clear\033[0m          → Clear terminal (client-side)");
+                    sendMessage("🔹 \033[1m/logout\033[0m         → Log out and delete session token");
                     sendMessage("🔹 \033[1m/quit\033[0m           → Exit the chat");
                     sendMessage("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                     continue;
