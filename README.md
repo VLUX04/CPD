@@ -6,5 +6,5 @@ Group members:
 
 1. Ana Carolina Costa Coutinho - up202108685@up.pt
 2. José Diogo Alves Granja - up202205143@up.pt
-3. &lt;first name&gt; &lt;family name&gt; (&lt;email address&gt;)
-4. &lt;first name&gt; &lt;family name&gt; (&lt;email address&gt;)
+3. Leonardo Monteiro Ribeiro - up202205144@up.pt
+
